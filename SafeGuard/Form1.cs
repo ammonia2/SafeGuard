@@ -1,10 +1,13 @@
 using MySql.Data.MySqlClient;
 using System.Configuration;
 using System.Data;
+using System.Drawing.Imaging;
 using System.Security.Cryptography;
 using System.Windows.Forms;
+using System.IO.Compression;
+using Microsoft.Data.SqlClient;
 
-namespace SafeGuard 
+namespace SafeGuard
 {
     public partial class Form1 : Form
     {
@@ -17,12 +20,26 @@ namespace SafeGuard
             connectionString = ConfigurationManager.ConnectionStrings["MySqlConnection"].ConnectionString;
             EnsureFileTableExists();
             EnsureEncryptedTableExists();
+            EnsureCompressedFilesTableExists(); // *** ADD THIS LINE ***
+
+            decryptionMethodSelection.Items.Clear();
+            decryptionMethodSelection.Items.Add("AES");
+            decryptionMethodSelection.Items.Add("Pixel Scrambling");
 
             LoadRecentFiles();
             fileSelectionEncryption.MaxDropDownItems = 5;
             fileSelectionEncryption.DropDownHeight = 100;
 
+            // *** ADD "Compressed Files" TO THE DROPDOWN ***
+            // Do this *before* setting the event handler if you want the initial load to work correctly
+            cmbTables.Items.Clear(); // Clear any design-time items
+            cmbTables.Items.Add("All Files");
+            cmbTables.Items.Add("Encrypted Files");
+            cmbTables.Items.Add("Compressed Files"); // Add the new option
+
             cmbTables.SelectedIndexChanged += cmbTables_SelectedIndexChanged; // event handler
+                                                                              // Consider setting a default index *after* adding items if you cleared them
+                                                                              // cmbTables.SelectedIndex = 0; // If you want "All Files" selected initially
         }
 
         private void EnsureFileTableExists()
@@ -58,6 +75,28 @@ namespace SafeGuard
               `original_file_id` INT NOT NULL,
               FOREIGN KEY (`file_id`) REFERENCES `files` (`file_id`)
             );";
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                using (MySqlCommand cmd = new MySqlCommand(createTableSql, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void EnsureCompressedFilesTableExists()
+        {
+            string createTableSql = @"
+                CREATE TABLE IF NOT EXISTS `compressed_files` (
+                  `compressed_file_id` INT AUTO_INCREMENT PRIMARY KEY,
+                  `file_id` INT NOT NULL,               -- Foreign key to the 'files' table entry for the COMPRESSED file
+                  `original_file_id` INT NOT NULL,      -- Foreign key to the 'files' table entry for the ORIGINAL file
+                  `compressed_on` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  FOREIGN KEY (`file_id`) REFERENCES `files` (`file_id`) ON DELETE CASCADE,          -- Optional: If compressed file record is deleted, delete this link too
+                  FOREIGN KEY (`original_file_id`) REFERENCES `files` (`file_id`) ON DELETE CASCADE   -- Optional: If original file record is deleted, delete this link too
+                );";
 
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
@@ -139,32 +178,62 @@ namespace SafeGuard
         private void LoadAllFiles()
         {
             // which table is selected
+            if (cmbTables.SelectedItem == null) return; // Prevent error if nothing is selected
             string selectedTable = cmbTables.SelectedItem.ToString();
 
             string query = "";
             if (selectedTable == "All Files")
             {
-                query = @"SELECT 
-                     file_id, 
-                     file_name, 
-                     file_size, 
-                     file_type, 
-                     file_path, 
-                     uploaded_on 
-                  FROM files 
+                query = @"SELECT
+                     file_id,
+                     file_name,
+                     file_size,
+                     file_type,
+                     file_path,
+                     uploaded_on
+                  FROM files
                   ORDER BY uploaded_on DESC";
             }
             else if (selectedTable == "Encrypted Files")
             {
-                query = @"SELECT 
-                     encrypted_id, 
-                     file_id, 
-                     encryption_key, 
-                     encrypted_on, 
-                     original_file_id 
-                  FROM encrypted 
-                  ORDER BY encrypted_id DESC";
+                // Join to get the encrypted file's name and path
+                query = @"SELECT
+                     e.encrypted_id,
+                     e.file_id AS encrypted_entry_file_id, -- ID in files table for the encrypted file
+                     f.file_name AS encrypted_file_name,
+                     f.file_path AS encrypted_file_path,
+                     e.encryption_key,
+                     e.encrypted_on,
+                     e.original_file_id
+                  FROM encrypted e
+                  JOIN files f ON e.file_id = f.file_id
+                  ORDER BY e.encrypted_on DESC"; // Order by when it was encrypted
             }
+            // *** ADD THIS ELSE IF BLOCK ***
+            else if (selectedTable == "Compressed Files")
+            {
+                // Join to get details about the compressed file and the original file
+                query = @"SELECT
+                     cf.compressed_file_id,
+                     cf.file_id AS compressed_entry_file_id, -- ID in files table for the compressed file
+                     f_comp.file_name AS compressed_file_name,
+                     f_comp.file_size AS compressed_file_size,
+                     f_comp.file_path AS compressed_file_path,
+                     cf.original_file_id,
+                     f_orig.file_name AS original_file_name, -- Get original name for reference
+                     cf.compressed_on
+                  FROM compressed_files cf
+                  JOIN files f_comp ON cf.file_id = f_comp.file_id           -- Join to get compressed file details
+                  JOIN files f_orig ON cf.original_file_id = f_orig.file_id   -- Join to get original file details
+                  ORDER BY cf.compressed_on DESC"; // Order by when it was compressed
+            }
+            else
+            {
+                // Optional: Handle unexpected selection or clear the grid
+                dataGridViewFiles.DataSource = null;
+                return;
+            }
+
 
             // display in DataGridView
             using (MySqlConnection conn = new MySqlConnection(connectionString))
@@ -174,8 +243,20 @@ namespace SafeGuard
                 using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                 {
                     DataTable dt = new DataTable();
-                    adapter.Fill(dt);
-                    dataGridViewFiles.DataSource = dt;
+                    try // Add try-catch around Fill in case the query is bad
+                    {
+                        adapter.Fill(dt);
+                        dataGridViewFiles.DataSource = dt;
+
+                        // Optional: Auto-size columns for better viewing
+                        dataGridViewFiles.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    }
+                    catch (MySqlException ex)
+                    {
+                        MessageBox.Show($"Error loading data: {ex.Message}\nQuery: {query}");
+                        dataGridViewFiles.DataSource = null; // Clear grid on error
+                    }
+
                 }
             }
         }
@@ -251,6 +332,280 @@ namespace SafeGuard
             panelFileManagement.Visible = true;
             LoadAllFiles();
         }
+
+        
+
+        // Implement the link click handler
+        private void linkLabel5_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            // Hide all other panels
+            panelContent.Visible = false;
+            panelEncryptionSettings.Visible = false;
+            decryptionPanel.Visible = false;
+            panelFileManagement.Visible = false;
+
+            // Show compression panel and load files
+            compressionPanel.Visible = true;
+            LoadFilesForCompression();
+        }
+
+        // Load files into the compression dropdown
+        // Replace the LoadFilesForCompression method
+        // Replace the LoadFilesForCompression method
+        private void LoadFilesForCompression()
+        {
+            fileSelectionCompression.Items.Clear();
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                // *** ADD .bmp HERE ***
+                string query = "SELECT file_id, file_name FROM files " +
+                               "WHERE file_type IN ('.png','.jpg','.jpeg', '.bmp')"; // Added '.bmp'
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int fileId = reader.GetInt32("file_id");
+                        string fileName = reader.GetString("file_name");
+
+                        // Adding to dropdown
+                        fileSelectionCompression.Items.Add(new ComboboxItem
+                        {
+                            Text = fileName,
+                            Value = fileId
+                        });
+                    }
+                }
+            }
+            fileSelectionCompression.MaxDropDownItems = 5;
+            fileSelectionCompression.DropDownHeight = 100;
+        }
+
+        // Replace the compressButton_Click handler
+        // Replace the compressButton_Click handler
+        private void compressButton_Click(object sender, EventArgs e)
+        {
+            if (fileSelectionCompression.SelectedIndex < 0)
+            {
+                MessageBox.Show("Please select an image file to optimize first.");
+                return;
+            }
+
+            ComboboxItem selectedItem = (ComboboxItem)fileSelectionCompression.SelectedItem;
+            int fileId = (int)selectedItem.Value;
+
+            string filePath = GetFilePathFromDB(fileId);
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                MessageBox.Show("File not found on disk!");
+                return;
+            }
+
+            // Prompt user to choose save location for compressed file
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Title = "Save Optimized Image";
+
+                // Get original file extension
+                string originalExtension = Path.GetExtension(filePath).ToLower();
+                string originalFileName = Path.GetFileNameWithoutExtension(filePath);
+
+                // *** ADDED BMP HANDLING HERE ***
+                if (originalExtension == ".bmp")
+                {
+                    // For BMP, suggest PNG for lossless compression, offer JPG for lossy, or keep BMP
+                    sfd.Filter = "PNG Image (Lossless)|*.png|JPEG Image (Lossy)|*.jpg|BMP Image (Uncompressed)|*.bmp|All Files|*.*";
+                    sfd.DefaultExt = "png"; // Recommend PNG as the best "compression" for BMP
+                    sfd.FileName = originalFileName + "_optimized.png"; // Suggest PNG filename
+                }
+                else if (originalExtension == ".jpg" || originalExtension == ".jpeg")
+                {
+                    sfd.Filter = "JPEG Image|*.jpg|All Files|*.*";
+                    sfd.DefaultExt = "jpg";
+                    sfd.FileName = originalFileName + "_optimized.jpg";
+                }
+                else // Assuming PNG if not JPG/BMP
+                {
+                    sfd.Filter = "PNG Image|*.png|All Files|*.*";
+                    sfd.DefaultExt = "png";
+                    sfd.FileName = originalFileName + "_optimized.png";
+                }
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        // Apply compression based on the *destination* format chosen in SaveFileDialog
+                        // The originalExtension is less relevant here now, CompressImage handles the target format
+                        CompressImage(filePath, sfd.FileName, originalExtension); // Pass originalExtension for context if needed, but destination drives the save format
+
+                        // Insert the compressed file record into the database
+                        InsertCompressedFileRecord(sfd.FileName, fileId); // Pass originalFileId for tracking if needed
+
+                        MessageBox.Show("Image optimized and saved successfully!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Optimization failed: {ex.Message}");
+                    }
+                }
+            }
+        }
+        private void CompressImage(string sourceFile, string destinationFile, string originalExtension) // originalExtension might be less critical now
+        {
+            // Load the original image
+            using (Bitmap originalBitmap = new Bitmap(sourceFile))
+            {
+                string destinationExtension = Path.GetExtension(destinationFile).ToLower();
+
+                if (destinationExtension == ".jpg" || destinationExtension == ".jpeg")
+                {
+                    // --- Save as JPEG (Lossy) ---
+                    EncoderParameters encoderParams = new EncoderParameters(1);
+                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 85L); // Quality 85
+                    ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+
+                    if (jpegEncoder != null)
+                    {
+                        originalBitmap.Save(destinationFile, jpegEncoder, encoderParams);
+                    }
+                    else
+                    {
+                        // Fallback if encoder somehow not found
+                        originalBitmap.Save(destinationFile, ImageFormat.Jpeg);
+                    }
+                }
+                else if (destinationExtension == ".png")
+                {
+                    // --- Save as PNG (Lossless) ---
+                    // Use high compression effort for PNG.
+                    // Note: This is lossless, so size reduction depends on original file's optimization level.
+                    EncoderParameters encoderParams = new EncoderParameters(1);
+                    // Setting Compression level (like 9L) might not directly map as expected via standard enums.
+                    // Often, simply saving as PNG uses a reasonable default compression.
+                    // Let's try setting the parameter for potentially better (but slower) compression effort.
+                    // If this causes issues or doesn't compile correctly with your .NET version/setup,
+                    // you might revert to just: originalBitmap.Save(destinationFile, ImageFormat.Png);
+                    encoderParams.Param[0] = new EncoderParameter(Encoder.Compression, 9L); // Use 9L for max effort (if supported)
+
+                    ImageCodecInfo pngEncoder = GetEncoder(ImageFormat.Png);
+                    if (pngEncoder != null)
+                    {
+                        originalBitmap.Save(destinationFile, pngEncoder, encoderParams);
+                    }
+                    else
+                    {
+                        originalBitmap.Save(destinationFile, ImageFormat.Png); // Fallback
+                    }
+                }
+                else if (destinationExtension == ".bmp")
+                {
+                    // --- Save as BMP (Uncompressed) ---
+                    // Saving as BMP generally doesn't apply significant compression with standard GDI+.
+                    originalBitmap.Save(destinationFile, ImageFormat.Bmp);
+                }
+                else
+                {
+                    // --- Unsupported Target Format ---
+                    // Throw an exception if the user somehow chose an unsupported extension via the dialog
+                    throw new NotSupportedException($"Saving to '{destinationExtension}' format is not explicitly supported by this function.");
+                }
+            }
+        }
+
+        // Check if an image has transparent pixels
+        private bool HasTransparency(Bitmap bitmap)
+        {
+            // Only check for transparency in 32bpp images (with alpha channel)
+            if (bitmap.PixelFormat != PixelFormat.Format32bppArgb &&
+                bitmap.PixelFormat != PixelFormat.Format32bppPArgb)
+                return false;
+
+            // Check a sample of pixels (checking every pixel could be slow for large images)
+            int stride = 10; // Check every 10th pixel
+            for (int y = 0; y < bitmap.Height; y += stride)
+            {
+                for (int x = 0; x < bitmap.Width; x += stride)
+                {
+                    Color pixelColor = bitmap.GetPixel(x, y);
+                    if (pixelColor.A < 255)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Helper method to get encoder info
+        private ImageCodecInfo GetEncoder(ImageFormat format)
+        {
+            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+            foreach (ImageCodecInfo codec in codecs)
+            {
+                if (codec.FormatID == format.Guid)
+                {
+                    return codec;
+                }
+            }
+            return null;
+        }
+
+        // Update InsertCompressedFileRecord to work with MySQL instead of SQL Server
+        // Update InsertCompressedFileRecord to insert into both 'files' and 'compressed_files'
+        private void InsertCompressedFileRecord(string compressedFilePath, int originalFileId)
+        {
+            FileInfo fi = new FileInfo(compressedFilePath);
+            double fileSizeMB = Math.Round(fi.Length / (1024.0 * 1024.0), 2);
+            string fileName = fi.Name;
+            string extension = fi.Extension;
+            long newCompressedFileId = -1; // Variable to store the ID of the newly inserted compressed file record
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+
+                // 1. Insert record for the compressed file into the 'files' table
+                string insertFileQuery = @"
+            INSERT INTO files (file_name, file_size, file_type, file_path, uploaded_on)
+            VALUES (@name, @size, @type, @path, NOW())";
+
+                using (MySqlCommand cmdFile = new MySqlCommand(insertFileQuery, conn))
+                {
+                    cmdFile.Parameters.AddWithValue("@name", fileName);
+                    cmdFile.Parameters.AddWithValue("@size", fileSizeMB);
+                    cmdFile.Parameters.AddWithValue("@type", extension);
+                    cmdFile.Parameters.AddWithValue("@path", compressedFilePath);
+                    cmdFile.ExecuteNonQuery();
+
+                    // Get the ID of the record just inserted into the 'files' table
+                    newCompressedFileId = cmdFile.LastInsertedId;
+                }
+
+                // 2. Insert record into the 'compressed_files' table to link original and compressed
+                if (newCompressedFileId > 0) // Ensure the file record was inserted successfully
+                {
+                    string insertCompressedLinkQuery = @"
+                INSERT INTO compressed_files (file_id, original_file_id, compressed_on)
+                VALUES (@compressed_file_id, @original_file_id, NOW())";
+
+                    using (MySqlCommand cmdLink = new MySqlCommand(insertCompressedLinkQuery, conn))
+                    {
+                        cmdLink.Parameters.AddWithValue("@compressed_file_id", newCompressedFileId); // The ID of the file record we just created
+                        cmdLink.Parameters.AddWithValue("@original_file_id", originalFileId);      // The ID of the file it was compressed FROM
+                        cmdLink.ExecuteNonQuery();
+                    }
+                }
+                else
+                {
+                    // Handle error - could not get the ID of the newly inserted file record
+                    MessageBox.Show("Error: Could not retrieve the ID for the compressed file record. Compression link not created.");
+                }
+            }
+        }
+
+
 
         private void viewAllFilesButton_Click(object sender, EventArgs e)
         {
@@ -479,6 +834,130 @@ namespace SafeGuard
             }
         }
 
+
+        public static Bitmap PixelScramble(Bitmap bmp, int seed)
+        {
+            int width = bmp.Width;
+            int height = bmp.Height;
+            Bitmap scrambled = new Bitmap(width, height);
+            Random rng = new Random(seed);
+
+            // Create a list of all pixel coordinates
+            List<Point> points = new List<Point>(width * height);
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    points.Add(new Point(x, y));
+
+            // Shuffle the list
+            var shuffled = points.OrderBy(p => rng.Next()).ToList();
+
+            // Lock the bits of both bitmaps for fast access
+            Rectangle rect = new Rectangle(0, 0, width, height);
+            System.Drawing.Imaging.BitmapData bmpData =
+                bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+            System.Drawing.Imaging.BitmapData scrambledData =
+                scrambled.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp.PixelFormat);
+
+            int bytesPerPixel = System.Drawing.Image.GetPixelFormatSize(bmp.PixelFormat) / 8;
+            int byteCount = bmpData.Stride * height;
+            byte[] pixels = new byte[byteCount];
+            byte[] scrambledPixels = new byte[byteCount];
+
+            // Copy all the pixels into the array
+            System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, pixels, 0, byteCount);
+
+            // Process the pixels
+            int index = 0;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    // Calculate positions in original array
+                    int position = y * bmpData.Stride + x * bytesPerPixel;
+
+                    // Calculate scrambled position
+                    Point scrambledPoint = shuffled[index++];
+                    int scrambledPosition = scrambledPoint.Y * bmpData.Stride + scrambledPoint.X * bytesPerPixel;
+
+                    // Copy pixel data (all channels - R,G,B,A if present)
+                    for (int i = 0; i < bytesPerPixel; i++)
+                    {
+                        scrambledPixels[scrambledPosition + i] = pixels[position + i];
+                    }
+                }
+            }
+
+            // Copy the scrambled pixels back to the bitmap
+            System.Runtime.InteropServices.Marshal.Copy(scrambledPixels, 0, scrambledData.Scan0, byteCount);
+
+            // Unlock the bits
+            bmp.UnlockBits(bmpData);
+            scrambled.UnlockBits(scrambledData);
+
+            return scrambled;
+        }
+
+        public static Bitmap PixelUnscramble(Bitmap scrambledBmp, int seed)
+        {
+            int width = scrambledBmp.Width;
+            int height = scrambledBmp.Height;
+            Bitmap original = new Bitmap(width, height);
+            Random rng = new Random(seed);
+
+            // Create and shuffle the points list the same way as in scrambling
+            List<Point> points = new List<Point>();
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    points.Add(new Point(x, y));
+
+            var shuffled = points.OrderBy(p => rng.Next()).ToList();
+
+            // Lock the bits of both bitmaps for fast access
+            Rectangle rect = new Rectangle(0, 0, width, height);
+            System.Drawing.Imaging.BitmapData scrambledData =
+                scrambledBmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, scrambledBmp.PixelFormat);
+            System.Drawing.Imaging.BitmapData originalData =
+                original.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly, scrambledBmp.PixelFormat);
+
+            int bytesPerPixel = System.Drawing.Image.GetPixelFormatSize(scrambledBmp.PixelFormat) / 8;
+            int byteCount = scrambledData.Stride * height;
+            byte[] scrambledPixels = new byte[byteCount];
+            byte[] originalPixels = new byte[byteCount];
+
+            // Copy all the pixels into the array
+            System.Runtime.InteropServices.Marshal.Copy(scrambledData.Scan0, scrambledPixels, 0, byteCount);
+
+            // Process the pixels in reverse - for each shuffled position, put the pixel back to its original position
+            int index = 0;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    // Get the scrambled position for this original position
+                    Point scrambledPoint = shuffled[index++];
+
+                    // Calculate positions in arrays
+                    int originalPosition = y * originalData.Stride + x * bytesPerPixel;
+                    int scrambledPosition = scrambledPoint.Y * scrambledData.Stride + scrambledPoint.X * bytesPerPixel;
+
+                    // Copy pixel data from scrambled to original (all channels)
+                    for (int i = 0; i < bytesPerPixel; i++)
+                    {
+                        originalPixels[originalPosition + i] = scrambledPixels[scrambledPosition + i];
+                    }
+                }
+            }
+
+            // Copy the original pixels back to the bitmap
+            System.Runtime.InteropServices.Marshal.Copy(originalPixels, 0, originalData.Scan0, byteCount);
+
+            // Unlock the bits
+            scrambledBmp.UnlockBits(scrambledData);
+            original.UnlockBits(originalData);
+
+            return original;
+        }
+
         private void decryptButton_Click(object sender, EventArgs e)
         {
             if (decryptionFileSelection.SelectedIndex < 0)
@@ -497,22 +976,11 @@ namespace SafeGuard
                 return;
             }
             string method = decryptionMethodSelection.SelectedItem.ToString();
-            if (method != "AES")
-            {
-                MessageBox.Show("Unsupported method: " + method);
-                return;
-            }
 
             // Validate the decryption key
             string typedKey = decryptionKey.Text.Trim();
-            // example check to see if length is 16 or 32
-            if (typedKey.Length != 16 && typedKey.Length != 32)
-            {
-                MessageBox.Show("Decryption Key must be 16 or 32 characters (128/256-bit).");
-                return;
-            }
-
             string storedKey = GetStoredEncryptionKey(encryptedId);
+
             if (storedKey == null)
             {
                 MessageBox.Show("Could not find encryption record for the selected file.");
@@ -525,7 +993,7 @@ namespace SafeGuard
                 return;
             }
 
-            // Finding the original file ID (i.e., what was encrypted in the first place)
+            // Finding the original file ID
             int? origFileId = GetOriginalFileId(encryptedId);
             if (origFileId == null)
             {
@@ -537,7 +1005,6 @@ namespace SafeGuard
             string originalExtension = GetOriginalFileExtension(origFileId.Value);
             if (string.IsNullOrEmpty(originalExtension))
             {
-                // if none
                 originalExtension = ".dat";
             }
 
@@ -548,13 +1015,62 @@ namespace SafeGuard
                 MessageBox.Show("Encrypted file not found on disk!");
                 return;
             }
-            byte[] encryptedBytes = File.ReadAllBytes(encryptedFilePath);
 
-            // Decryption
             byte[] decryptedData;
             try
             {
-                decryptedData = AesDecrypt(encryptedBytes, typedKey);
+                if (method == "AES")
+                {
+                    // Validate key length for AES
+                    if (typedKey.Length != 16 && typedKey.Length != 32)
+                    {
+                        MessageBox.Show("Decryption Key must be 16 or 32 characters (128/256-bit).");
+                        return;
+                    }
+
+                    byte[] encryptedBytes = File.ReadAllBytes(encryptedFilePath);
+                    decryptedData = AesDecrypt(encryptedBytes, typedKey);
+                }
+                else if (method == "Pixel Scrambling")
+                {
+                    // For pixel scrambling we need a numeric key
+                    if (!int.TryParse(typedKey, out int unscrambleSeed))
+                    {
+                        MessageBox.Show("For Pixel Scrambling, please enter a numeric key.");
+                        return;
+                    }
+
+                    // Load the scrambled image
+                    using (Bitmap scrambledBitmap = new Bitmap(encryptedFilePath))
+                    {
+                        // Apply pixel unscrambling
+                        using (Bitmap unscrambledBitmap = PixelUnscramble(scrambledBitmap, unscrambleSeed))
+                        {
+                            // Convert to byte array
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                // Determine the best format to save based on original extension
+                                ImageFormat format = ImageFormat.Png; // Default
+
+                                string ext = originalExtension.ToLower();
+                                if (ext == ".jpg" || ext == ".jpeg")
+                                    format = ImageFormat.Jpeg;
+                                else if (ext == ".bmp")
+                                    format = ImageFormat.Bmp;
+                                else if (ext == ".gif")
+                                    format = ImageFormat.Gif;
+
+                                unscrambledBitmap.Save(ms, format);
+                                decryptedData = ms.ToArray();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Unsupported decryption method: " + method);
+                    return;
+                }
             }
             catch (Exception ex)
             {
@@ -566,9 +1082,7 @@ namespace SafeGuard
             using (SaveFileDialog sfd = new SaveFileDialog())
             {
                 sfd.Title = "Save Decrypted File";
-                // Provide a filter that defaults to the original extension:
                 sfd.Filter = $"{originalExtension.ToUpper().TrimStart('.')} files|*{originalExtension}|All Files|*.*";
-                // Provide a default file name if you want
                 sfd.FileName = "DecryptedFile" + originalExtension;
 
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -593,6 +1107,11 @@ namespace SafeGuard
             int originalFileId = (int)selectedItem.Value;
 
             string filePath = GetFilePathFromDB(originalFileId);
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                MessageBox.Show("File not found on disk!");
+                return;
+            }
 
             if (encryptionMethodSelection.SelectedIndex < 0)
             {
@@ -601,41 +1120,100 @@ namespace SafeGuard
             }
             string method = encryptionMethodSelection.SelectedItem.ToString();
 
+            // Process based on encryption method
+            byte[] processedData;
             string keyString = encryptionKeyBox.Text.Trim();
-            if (keyString.Length != 16 && keyString.Length != 32)
-            {
-                MessageBox.Show("Encryption Key must be 16 or 32 characters (128/256-bit).");
-                return;
-            }
+            string suggestedExtension = ".bin"; // Default for AES
 
-            // Read image file from disk
-            byte[] originalData = File.ReadAllBytes(filePath);
-
-            // Encrypt the data
-            byte[] encryptedData;
             try
             {
-                encryptedData = AesEncrypt(originalData, keyString);
+                if (method == "AES")
+                {
+                    if (keyString.Length != 16 && keyString.Length != 32)
+                    {
+                        MessageBox.Show("Encryption Key must be 16 or 32 characters (128/256-bit).");
+                        return;
+                    }
+
+                    // Read file from disk
+                    byte[] originalData = File.ReadAllBytes(filePath);
+
+                    // Encrypt the data
+                    processedData = AesEncrypt(originalData, keyString);
+
+                    // For AES, use .enc or .bin extension
+                    suggestedExtension = ".enc";
+                }
+                else if (method == "Pixel Scrambling")
+                {
+                    // For pixel scrambling we need a numeric key
+                    if (!int.TryParse(keyString, out int scrambleSeed))
+                    {
+                        MessageBox.Show("For Pixel Scrambling, please enter a numeric key.");
+                        return;
+                    }
+
+                    // Load as bitmap for pixel scrambling
+                    using (Bitmap originalBitmap = new Bitmap(filePath))
+                    {
+                        // Apply pixel scrambling
+                        using (Bitmap scrambledBitmap = Form1.PixelScramble(originalBitmap, scrambleSeed))
+                        {
+                            // Convert to byte array
+                            using (MemoryStream ms = new MemoryStream())
+                            {
+                                // Save in PNG format to preserve quality
+                                scrambledBitmap.Save(ms, ImageFormat.Png);
+                                processedData = ms.ToArray();
+                            }
+                        }
+                    }
+
+                    // For Pixel Scrambling, always use PNG extension
+                    suggestedExtension = ".png";
+                }
+                else
+                {
+                    MessageBox.Show("Unsupported encryption method: " + method);
+                    return;
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Encryption failed: " + ex.Message);
+                MessageBox.Show($"Processing failed: {ex.Message}");
                 return;
             }
 
             // Prompt user to choose save location
             using (SaveFileDialog sfd = new SaveFileDialog())
             {
-                sfd.Title = "Save Encrypted File";
-                sfd.Filter = "All Files|*.*";
+                sfd.Title = "Save Processed File";
+
+                // Set appropriate filter and default extension based on method
+                if (method == "AES")
+                {
+                    sfd.Filter = "Encrypted Files|*.enc|Binary Files|*.bin|All Files|*.*";
+                    sfd.DefaultExt = "enc";
+                }
+                else if (method == "Pixel Scrambling")
+                {
+                    sfd.Filter = "PNG Image|*.png|All Files|*.*";
+                    sfd.DefaultExt = "png";
+                }
+
+                // Suggest a filename
+                string originalFileName = Path.GetFileNameWithoutExtension(filePath);
+                sfd.FileName = originalFileName + "_processed" + suggestedExtension;
+
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    // Write the encrypted bytes to chosen file
-                    File.WriteAllBytes(sfd.FileName, encryptedData);
+                    // Write the processed bytes to chosen file
+                    File.WriteAllBytes(sfd.FileName, processedData);
 
+                    // Insert record into database
                     InsertEncryptedRecord(originalFileId, keyString, sfd.FileName);
 
-                    MessageBox.Show("File encrypted and saved successfully!");
+                    MessageBox.Show("File processed and saved successfully!");
                 }
             }
         }
@@ -707,5 +1285,9 @@ namespace SafeGuard
             }
         }
 
+        private void panelHeader_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }

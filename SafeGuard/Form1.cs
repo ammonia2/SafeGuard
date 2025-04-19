@@ -298,7 +298,8 @@ namespace SafeGuard
             panelFileManagement.Visible = false;
 
             panelEncryptionSettings.Visible = true;
-
+            compressionPanel.Visible = false;    // Added
+            decompressionPanel.Visible = false;  // Added
             encryptionMethodSelection.SelectedIndex = 0;
             LoadImageFileNames();
         }
@@ -308,8 +309,10 @@ namespace SafeGuard
             panelEncryptionSettings.Visible = false;
             decryptionPanel.Visible = false;
             panelFileManagement.Visible = false;
+            compressionPanel.Visible = false;    // Added
+            decompressionPanel.Visible = false;  // Added
 
-            panelContent.Visible = true;
+            panelContent.Visible = true; // Show Home panel
         }
 
         private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -317,7 +320,8 @@ namespace SafeGuard
             panelContent.Visible = false;
             panelEncryptionSettings.Visible = false;
             panelFileManagement.Visible = false;
-
+            compressionPanel.Visible = false;    // Added
+            decompressionPanel.Visible = false;  // Added
             decryptionPanel.Visible = true;
             LoadEncryptedFileNames();
         }
@@ -327,13 +331,15 @@ namespace SafeGuard
             panelContent.Visible = false;
             panelEncryptionSettings.Visible = false;
             decryptionPanel.Visible = false;
+            compressionPanel.Visible = false;    // Added
+            decompressionPanel.Visible = false;  // Added
 
-            cmbTables.SelectedIndex = 0;
-            panelFileManagement.Visible = true;
-            LoadAllFiles();
+            cmbTables.SelectedIndex = 0; // Reset selection
+            panelFileManagement.Visible = true; // Show File Management panel
+            LoadAllFiles(); // Load data for the selected table
         }
 
-        
+
 
         // Implement the link click handler
         private void linkLabel5_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -343,11 +349,226 @@ namespace SafeGuard
             panelEncryptionSettings.Visible = false;
             decryptionPanel.Visible = false;
             panelFileManagement.Visible = false;
+            decompressionPanel.Visible = false;  // Added
 
             // Show compression panel and load files
             compressionPanel.Visible = true;
             LoadFilesForCompression();
         }
+
+        private void linkLabel6_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            // Hide all other panels
+            panelContent.Visible = false;
+            panelEncryptionSettings.Visible = false;
+            decryptionPanel.Visible = false;
+            panelFileManagement.Visible = false;
+            compressionPanel.Visible = false;
+
+            // Show decompression panel
+            decompressionPanel.Visible = true;
+            LoadCompressedFilesForDecompression();
+        }
+
+        private void LoadCompressedFilesForDecompression()
+        {
+            fileSelectionDecompression.Items.Clear();
+
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                // Join to get details about compressed files
+                string query = @"
+    SELECT cf.compressed_file_id, cf.file_id, f.file_name 
+    FROM compressed_files cf
+    JOIN files f ON cf.file_id = f.file_id
+    ORDER BY cf.compressed_on DESC";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int compressedFileId = reader.GetInt32("compressed_file_id");
+                        int fileId = reader.GetInt32("file_id");
+                        string fileName = reader.GetString("file_name");
+
+                        // Add to dropdown
+                        fileSelectionDecompression.Items.Add(new CompressionComboboxItem
+                        {
+                            Text = fileName,
+                            FileId = fileId,
+                            CompressedFileId = compressedFileId
+                        });
+                    }
+                }
+            }
+
+            fileSelectionDecompression.MaxDropDownItems = 5;
+            fileSelectionDecompression.DropDownHeight = 100;
+        }
+
+        public class CompressionComboboxItem
+        {
+            public string Text { get; set; }
+            public int FileId { get; set; }
+            public int CompressedFileId { get; set; }
+
+            public override string ToString() => Text; // ensures ComboBox displays Text
+        }
+
+        private void decompressButton_Click(object sender, EventArgs e)
+        {
+            if (fileSelectionDecompression.SelectedIndex < 0)
+            {
+                MessageBox.Show("Please select a compressed file to decompress first.");
+                return;
+            }
+
+            CompressionComboboxItem selectedItem = (CompressionComboboxItem)fileSelectionDecompression.SelectedItem;
+            int compressedFileId = selectedItem.CompressedFileId;
+            int fileId = selectedItem.FileId;
+
+            // Get paths and original file info
+            string compressedFilePath = GetFilePathFromDB(fileId);
+            int originalFileId = GetOriginalFileIdForCompressed(compressedFileId);
+            string originalFileName = GetFileNameFromDB(originalFileId) ?? "OriginalFile";
+            string originalExtension = GetOriginalFileExtension(originalFileId);
+
+            if (string.IsNullOrEmpty(compressedFilePath) || !File.Exists(compressedFilePath))
+            {
+                MessageBox.Show("Compressed file not found on disk!");
+                return;
+            }
+
+            // Prompt user to choose save location
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.Title = "Save Decompressed File";
+                string filterExt = (originalExtension?.TrimStart('.') ?? "dat").ToUpper();
+                sfd.Filter = $"{filterExt} files (*{originalExtension})|*{originalExtension}|All Files (*.*)|*.*";
+                sfd.FileName = Path.GetFileNameWithoutExtension(originalFileName) + "_decompressed" + originalExtension;
+                sfd.DefaultExt = originalExtension?.TrimStart('.');
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        // Decompress file
+                        DecompressImage(compressedFilePath, sfd.FileName);
+
+                        // Insert decompressed file record into database
+                        InsertDecompressedFileRecord(sfd.FileName, originalFileId);
+
+                        MessageBox.Show("File decompressed successfully!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Decompression failed: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private void DecompressImage(string compressedFilePath, string outputFilePath)
+        {
+            // For images, "decompression" is essentially opening the compressed file and 
+            // saving it in its original/requested format at original/higher quality
+            using (Bitmap compressedBitmap = new Bitmap(compressedFilePath))
+            {
+                // Determine the target format based on the destination extension
+                string destExtension = Path.GetExtension(outputFilePath).ToLower();
+                ImageFormat format;
+
+                switch (destExtension)
+                {
+                    case ".jpg":
+                    case ".jpeg":
+                        // For JPEG, use high quality when decompressing
+                        using (EncoderParameters encoderParams = new EncoderParameters(1))
+                        {
+                            encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 100L); // Maximum quality
+                            ImageCodecInfo jpegEncoder = GetEncoder(ImageFormat.Jpeg);
+
+                            if (jpegEncoder != null)
+                            {
+                                compressedBitmap.Save(outputFilePath, jpegEncoder, encoderParams);
+                                return;
+                            }
+                        }
+                        format = ImageFormat.Jpeg;
+                        break;
+
+                    case ".bmp":
+                        format = ImageFormat.Bmp;
+                        break;
+
+                    case ".png":
+                        format = ImageFormat.Png;
+                        break;
+
+                    case ".gif":
+                        format = ImageFormat.Gif;
+                        break;
+
+                    default:
+                        format = ImageFormat.Png; // Default to PNG
+                        break;
+                }
+
+                // Save with the determined format
+                compressedBitmap.Save(outputFilePath, format);
+            }
+        }
+
+        private int GetOriginalFileIdForCompressed(int compressedFileId)
+        {
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = "SELECT original_file_id FROM compressed_files WHERE compressed_file_id = @cfId LIMIT 1";
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@cfId", compressedFileId);
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+            return -1; // Default value if not found
+        }
+
+        private void InsertDecompressedFileRecord(string decompressedFilePath, int originalFileId)
+        {
+            FileInfo fi = new FileInfo(decompressedFilePath);
+            double fileSizeMB = Math.Round(fi.Length / (1024.0 * 1024.0), 2);
+            string fileName = fi.Name;
+            string extension = fi.Extension;
+
+            // Insert into files table
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                string query = @"
+    INSERT INTO files (file_name, file_size, file_type, file_path, uploaded_on)
+    VALUES (@name, @size, @type, @path, NOW())";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", fileName);
+                    cmd.Parameters.AddWithValue("@size", fileSizeMB);
+                    cmd.Parameters.AddWithValue("@type", extension);
+                    cmd.Parameters.AddWithValue("@path", decompressedFilePath);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Optionally - add a record to a decompressed_files table if you want to track decompression history
+            }
+        }
+
+
 
         // Load files into the compression dropdown
         // Replace the LoadFilesForCompression method
@@ -612,10 +833,12 @@ namespace SafeGuard
             panelContent.Visible = false;
             panelEncryptionSettings.Visible = false;
             decryptionPanel.Visible = false;
+            compressionPanel.Visible = false;    // Added
+            decompressionPanel.Visible = false;  // Added
 
-            panelFileManagement.Visible = true;
-            cmbTables.SelectedIndex = 0;
-            LoadAllFiles();
+            panelFileManagement.Visible = true; // Show File Management panel
+            cmbTables.SelectedIndex = 0; // Ensure "All Files" is selected
+            LoadAllFiles(); // Load the files into the grid
         }
 
         private int? GetOriginalFileId(int encryptedId)

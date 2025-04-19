@@ -1,4 +1,6 @@
-﻿using System.Data.SqlClient;
+﻿// --- START OF UPDATED Form1.Designer.cs ---
+
+using System.Data.SqlClient;
 namespace SafeGuard
 {
     partial class Form1
@@ -30,6 +32,8 @@ namespace SafeGuard
         private void InitializeComponent()
         {
             panelHeader = new Panel();
+            linkLabel6 = new LinkLabel();
+            linkLabel5 = new LinkLabel();
             linkLabel4 = new LinkLabel();
             searchBtn = new Button();
             txtSearch = new TextBox();
@@ -70,19 +74,33 @@ namespace SafeGuard
             decryptionMethodSelection = new ComboBox();
             label11 = new Label();
             label12 = new Label();
-            linkLabel5 = new LinkLabel();
+            compressionPanel = new Panel();
+            compressButton = new Button();
+            fileSelectionCompression = new ComboBox();
+            compressionFileLabel = new Label();
+            compressionDescLabel = new Label();
+            compressionTitleLabel = new Label();
+            decompressionPanel = new Panel();
+            decompressButton = new Button();
+            fileSelectionDecompression = new ComboBox();
+            decompressionFileLabel = new Label();
+            decompressionDescLabel = new Label();
+            decompressionTitleLabel = new Label();
             panelHeader.SuspendLayout();
             panelContent.SuspendLayout();
             panelFileManagement.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFiles).BeginInit();
             panelEncryptionSettings.SuspendLayout();
             decryptionPanel.SuspendLayout();
+            compressionPanel.SuspendLayout();
+            decompressionPanel.SuspendLayout();
             SuspendLayout();
             // 
             // panelHeader
             // 
             panelHeader.BackColor = Color.LightGray;
             panelHeader.BorderStyle = BorderStyle.FixedSingle;
+            panelHeader.Controls.Add(linkLabel6);
             panelHeader.Controls.Add(linkLabel5);
             panelHeader.Controls.Add(linkLabel4);
             panelHeader.Controls.Add(searchBtn);
@@ -98,6 +116,32 @@ namespace SafeGuard
             panelHeader.Size = new Size(986, 62);
             panelHeader.TabIndex = 0;
             panelHeader.Paint += panelHeader_Paint;
+            // 
+            // linkLabel6
+            // 
+            linkLabel6.AutoSize = true;
+            linkLabel6.Cursor = Cursors.Hand;
+            linkLabel6.LinkColor = Color.Black;
+            linkLabel6.Location = new Point(588, 24);
+            linkLabel6.Name = "linkLabel6";
+            linkLabel6.Size = new Size(112, 20);
+            linkLabel6.TabIndex = 8;
+            linkLabel6.TabStop = true;
+            linkLabel6.Text = "Decompression";
+            linkLabel6.LinkClicked += linkLabel6_LinkClicked;
+            // 
+            // linkLabel5
+            // 
+            linkLabel5.AutoSize = true;
+            linkLabel5.Cursor = Cursors.Hand;
+            linkLabel5.LinkColor = Color.Black;
+            linkLabel5.Location = new Point(480, 24);
+            linkLabel5.Name = "linkLabel5";
+            linkLabel5.Size = new Size(95, 20);
+            linkLabel5.TabIndex = 7;
+            linkLabel5.TabStop = true;
+            linkLabel5.Text = "Compression";
+            linkLabel5.LinkClicked += linkLabel5_LinkClicked;
             // 
             // linkLabel4
             // 
@@ -135,7 +179,7 @@ namespace SafeGuard
             linkLabel3.AutoSize = true;
             linkLabel3.Cursor = Cursors.Hand;
             linkLabel3.LinkColor = Color.Black;
-            linkLabel3.Location = new Point(410, 24);
+            linkLabel3.Location = new Point(285, 24);
             linkLabel3.Name = "linkLabel3";
             linkLabel3.Size = new Size(79, 20);
             linkLabel3.TabIndex = 3;
@@ -148,7 +192,7 @@ namespace SafeGuard
             linkLabel2.AutoSize = true;
             linkLabel2.Cursor = Cursors.Hand;
             linkLabel2.LinkColor = Color.Black;
-            linkLabel2.Location = new Point(510, 24);
+            linkLabel2.Location = new Point(385, 24);
             linkLabel2.Name = "linkLabel2";
             linkLabel2.Size = new Size(82, 20);
             linkLabel2.TabIndex = 2;
@@ -161,7 +205,7 @@ namespace SafeGuard
             linkLabel1.AutoSize = true;
             linkLabel1.Cursor = Cursors.Hand;
             linkLabel1.LinkColor = Color.Black;
-            linkLabel1.Location = new Point(343, 24);
+            linkLabel1.Location = new Point(218, 24);
             linkLabel1.Name = "linkLabel1";
             linkLabel1.Size = new Size(50, 20);
             linkLabel1.TabIndex = 1;
@@ -302,7 +346,6 @@ namespace SafeGuard
             // 
             cmbTables.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbTables.FormattingEnabled = true;
-            cmbTables.Items.AddRange(new object[] { "All Files", "Encrypted Files" });
             cmbTables.Location = new Point(438, 184);
             cmbTables.Margin = new Padding(3, 4, 3, 4);
             cmbTables.Name = "cmbTables";
@@ -528,7 +571,6 @@ namespace SafeGuard
             // 
             decryptionMethodSelection.DropDownStyle = ComboBoxStyle.DropDownList;
             decryptionMethodSelection.FormattingEnabled = true;
-            decryptionMethodSelection.Items.AddRange(new object[] { "AES", "Pixel Scrambling" });
             decryptionMethodSelection.Location = new Point(435, 311);
             decryptionMethodSelection.Margin = new Padding(3, 4, 3, 4);
             decryptionMethodSelection.Name = "decryptionMethodSelection";
@@ -555,32 +597,157 @@ namespace SafeGuard
             label12.TabIndex = 0;
             label12.Text = "File Decryption";
             // 
-            // linkLabel5
+            // compressionPanel
             // 
-            linkLabel5.AutoSize = true;
-            linkLabel5.Cursor = Cursors.Hand;
-            linkLabel5.LinkColor = Color.Black;
-            linkLabel5.Location = new Point(605, 24);
-            linkLabel5.Name = "linkLabel5";
-            linkLabel5.Size = new Size(95, 20);
-            linkLabel5.TabIndex = 7;
-            linkLabel5.TabStop = true;
-            linkLabel5.Text = "Compression";
-            linkLabel5.LinkClicked += linkLabel5_LinkClicked;
+            compressionPanel.BorderStyle = BorderStyle.Fixed3D;
+            compressionPanel.Controls.Add(compressButton);
+            compressionPanel.Controls.Add(fileSelectionCompression);
+            compressionPanel.Controls.Add(compressionFileLabel);
+            compressionPanel.Controls.Add(compressionDescLabel);
+            compressionPanel.Controls.Add(compressionTitleLabel);
+            compressionPanel.Dock = DockStyle.Fill;
+            compressionPanel.Location = new Point(0, 62);
+            compressionPanel.Margin = new Padding(3, 4, 3, 4);
+            compressionPanel.Name = "compressionPanel";
+            compressionPanel.Size = new Size(986, 647);
+            compressionPanel.TabIndex = 8;
+            compressionPanel.Visible = false;
+            // 
+            // compressButton
+            // 
+            compressButton.BackColor = SystemColors.ActiveCaptionText;
+            compressButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            compressButton.ForeColor = Color.Snow;
+            compressButton.Location = new Point(435, 383);
+            compressButton.Name = "compressButton";
+            compressButton.Size = new Size(129, 50);
+            compressButton.TabIndex = 4;
+            compressButton.Text = "Optimize";
+            compressButton.UseVisualStyleBackColor = false;
+            compressButton.Click += compressButton_Click;
+            // 
+            // fileSelectionCompression
+            // 
+            fileSelectionCompression.DropDownStyle = ComboBoxStyle.DropDownList;
+            fileSelectionCompression.FormattingEnabled = true;
+            fileSelectionCompression.Location = new Point(425, 312);
+            fileSelectionCompression.Name = "fileSelectionCompression";
+            fileSelectionCompression.Size = new Size(150, 28);
+            fileSelectionCompression.TabIndex = 3;
+            // 
+            // compressionFileLabel
+            // 
+            compressionFileLabel.AutoSize = true;
+            compressionFileLabel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            compressionFileLabel.Location = new Point(443, 253);
+            compressionFileLabel.Name = "compressionFileLabel";
+            compressionFileLabel.Size = new Size(108, 28);
+            compressionFileLabel.TabIndex = 2;
+            compressionFileLabel.Text = "Select File";
+            // 
+            // compressionDescLabel
+            // 
+            compressionDescLabel.AutoSize = true;
+            compressionDescLabel.Font = new Font("Segoe UI", 12F);
+            compressionDescLabel.Location = new Point(317, 123);
+            compressionDescLabel.Name = "compressionDescLabel";
+            compressionDescLabel.Size = new Size(382, 28);
+            compressionDescLabel.TabIndex = 1;
+            compressionDescLabel.Text = "Optimize your image files (JPG, PNG, BMP)";
+            // 
+            // compressionTitleLabel
+            // 
+            compressionTitleLabel.AutoSize = true;
+            compressionTitleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            compressionTitleLabel.Location = new Point(377, 57);
+            compressionTitleLabel.Name = "compressionTitleLabel";
+            compressionTitleLabel.Size = new Size(258, 41);
+            compressionTitleLabel.TabIndex = 0;
+            compressionTitleLabel.Text = "File Compression";
+            // 
+            // decompressionPanel
+            // 
+            decompressionPanel.BorderStyle = BorderStyle.Fixed3D;
+            decompressionPanel.Controls.Add(decompressButton);
+            decompressionPanel.Controls.Add(fileSelectionDecompression);
+            decompressionPanel.Controls.Add(decompressionFileLabel);
+            decompressionPanel.Controls.Add(decompressionDescLabel);
+            decompressionPanel.Controls.Add(decompressionTitleLabel);
+            decompressionPanel.Dock = DockStyle.Fill;
+            decompressionPanel.Location = new Point(0, 62);
+            decompressionPanel.Margin = new Padding(3, 4, 3, 4);
+            decompressionPanel.Name = "decompressionPanel";
+            decompressionPanel.Size = new Size(986, 647);
+            decompressionPanel.TabIndex = 9;
+            decompressionPanel.Visible = false;
+            // 
+            // decompressButton
+            // 
+            decompressButton.BackColor = SystemColors.ActiveCaptionText;
+            decompressButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            decompressButton.ForeColor = Color.Snow;
+            decompressButton.Location = new Point(420, 383);
+            decompressButton.Name = "decompressButton";
+            decompressButton.Size = new Size(155, 50);
+            decompressButton.TabIndex = 4;
+            decompressButton.Text = "Decompress";
+            decompressButton.UseVisualStyleBackColor = false;
+            decompressButton.Click += decompressButton_Click;
+            // 
+            // fileSelectionDecompression
+            // 
+            fileSelectionDecompression.DropDownStyle = ComboBoxStyle.DropDownList;
+            fileSelectionDecompression.FormattingEnabled = true;
+            fileSelectionDecompression.Location = new Point(425, 312);
+            fileSelectionDecompression.Name = "fileSelectionDecompression";
+            fileSelectionDecompression.Size = new Size(150, 28);
+            fileSelectionDecompression.TabIndex = 3;
+            // 
+            // decompressionFileLabel
+            // 
+            decompressionFileLabel.AutoSize = true;
+            decompressionFileLabel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            decompressionFileLabel.Location = new Point(400, 253);
+            decompressionFileLabel.Name = "decompressionFileLabel";
+            decompressionFileLabel.Size = new Size(212, 28);
+            decompressionFileLabel.TabIndex = 2;
+            decompressionFileLabel.Text = "Select Optimised File";
+            // 
+            // decompressionDescLabel
+            // 
+            decompressionDescLabel.AutoSize = true;
+            decompressionDescLabel.Font = new Font("Segoe UI", 12F);
+            decompressionDescLabel.Location = new Point(317, 123);
+            decompressionDescLabel.Name = "decompressionDescLabel";
+            decompressionDescLabel.Size = new Size(415, 28);
+            decompressionDescLabel.TabIndex = 1;
+            decompressionDescLabel.Text = "Restore optimized files to their original format";
+            // 
+            // decompressionTitleLabel
+            // 
+            decompressionTitleLabel.AutoSize = true;
+            decompressionTitleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            decompressionTitleLabel.Location = new Point(377, 57);
+            decompressionTitleLabel.Name = "decompressionTitleLabel";
+            decompressionTitleLabel.Size = new Size(291, 41);
+            decompressionTitleLabel.TabIndex = 0;
+            decompressionTitleLabel.Text = "File Decompression";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(986, 709);
+            Controls.Add(decompressionPanel);
+            Controls.Add(compressionPanel);
             Controls.Add(panelFileManagement);
-            Controls.Add(panelContent);
             Controls.Add(decryptionPanel);
             Controls.Add(panelEncryptionSettings);
+            Controls.Add(panelContent);
             Controls.Add(panelHeader);
             Margin = new Padding(3, 4, 3, 4);
             Name = "Form1";
-            Text = "Form1";
+            Text = "SafeGuard File Manager";
             panelHeader.ResumeLayout(false);
             panelHeader.PerformLayout();
             panelContent.ResumeLayout(false);
@@ -592,58 +759,12 @@ namespace SafeGuard
             panelEncryptionSettings.PerformLayout();
             decryptionPanel.ResumeLayout(false);
             decryptionPanel.PerformLayout();
+            compressionPanel.ResumeLayout(false);
+            compressionPanel.PerformLayout();
+            decompressionPanel.ResumeLayout(false);
+            decompressionPanel.PerformLayout();
             ResumeLayout(false);
 
-            // Initialize compression panel
-            compressionPanel = new Panel();
-            compressionPanel.Dock = DockStyle.Fill;
-            compressionPanel.BorderStyle = BorderStyle.Fixed3D;
-            compressionPanel.Visible = false;
-            this.Controls.Add(compressionPanel);
-
-            // Title label
-            Label titleLabel = new Label();
-            titleLabel.Text = "File Compression";
-            titleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-            titleLabel.Location = new Point(397, 97);
-            titleLabel.AutoSize = true;
-            compressionPanel.Controls.Add(titleLabel);
-
-            // Description label
-            Label descLabel = new Label();
-            descLabel.Text = "Compress your files to save storage space";
-            descLabel.Font = new Font("Segoe UI", 12F);
-            descLabel.Location = new Point(327, 163);
-            descLabel.AutoSize = true;
-            compressionPanel.Controls.Add(descLabel);
-
-            // File selection label
-            Label fileLabel = new Label();
-            fileLabel.Text = "Select File";
-            fileLabel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            fileLabel.Location = new Point(453, 293);
-            fileLabel.AutoSize = true;
-            compressionPanel.Controls.Add(fileLabel);
-
-            // File selection dropdown
-            fileSelectionCompression = new ComboBox();
-            fileSelectionCompression.Location = new Point(443, 352);
-            fileSelectionCompression.Size = new Size(138, 28);
-            fileSelectionCompression.DropDownStyle = ComboBoxStyle.DropDownList;
-            compressionPanel.Controls.Add(fileSelectionCompression);
-
-            // Compression button
-            compressButton = new Button();
-            compressButton.Text = "Compress";
-            compressButton.BackColor = SystemColors.ActiveCaptionText;
-            compressButton.ForeColor = Color.Snow;
-            compressButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            compressButton.Location = new Point(453, 423);
-            compressButton.Size = new Size(119, 50);
-            compressButton.Click += new EventHandler(compressButton_Click);
-            compressionPanel.Controls.Add(compressButton);
-
-           
         }
 
         #endregion
@@ -673,7 +794,7 @@ namespace SafeGuard
         private Button encryptButton;
         private Panel decryptionPanel;
         private Button decryptButton;
-        private Label label6;
+        private Label label6; // This label exists but wasn't being used in the Decompression panel before
         private ComboBox decryptionFileSelection;
         private TextBox decryptionKey;
         private Label label9;
@@ -690,9 +811,21 @@ namespace SafeGuard
         private DataGridView dataGridViewFiles;
         private Label label14;
         private LinkLabel linkLabel5;
+        // Compression Controls
         private Panel compressionPanel;
         private ComboBox fileSelectionCompression;
         private Button compressButton;
-        private Label compressionLabel;
+        private Label compressionTitleLabel; // Renamed from compressionLabel for clarity
+        private Label compressionDescLabel;
+        private Label compressionFileLabel;
+        // Decompression Controls (NEW)
+        private LinkLabel linkLabel6; // Link in header
+        private Panel decompressionPanel;
+        private Label decompressionTitleLabel;
+        private Label decompressionDescLabel;
+        private Label decompressionFileLabel;
+        private ComboBox fileSelectionDecompression;
+        private Button decompressButton;
     }
 }
+// --- END OF UPDATED Form1.Designer.cs ---

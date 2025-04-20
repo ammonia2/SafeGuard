@@ -1517,10 +1517,5 @@ namespace SafeGuard
                 }
             }
         }
-
-        private void panelHeader_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
     }
 }

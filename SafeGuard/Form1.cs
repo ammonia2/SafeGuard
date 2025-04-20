@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+using System.Drawing.Imaging; // Needed for ImageFormat
+using System.IO; // Needed for Path, File, Directory
+using System.Linq; // Needed for Linq extension methods like Contains
 using System.Security.Cryptography;
 using System.Windows.Forms;
 
@@ -17,6 +18,11 @@ namespace SafeGuard
     {
         private readonly string _connectionString;
         private readonly DatabaseManager _dbManager;
+        private const string SavedImagesFolderName = "savedimages"; // Subfolder name
+        private readonly HashSet<string> _supportedImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png", ".jpg", ".jpeg", ".bmp" // Add more if needed
+        };
 
         public Form1()
         {
@@ -34,12 +40,20 @@ namespace SafeGuard
             {
                 MessageBox.Show($"Fatal Error initializing application: {ex.Message}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 _connectionString = string.Empty;
-                _dbManager = new DatabaseManager(string.Empty);
+                // Use a dummy manager to avoid null refs, but operations will fail
+                _dbManager = new DatabaseManager("Server=none;"); // Provide a minimal invalid string
                 this.Text += " (DATABASE CONNECTION FAILED)";
+                // Disable controls that need the DB? (Optional)
+                btnUpload.Enabled = false;
+                panelDropPasteTarget.AllowDrop = false; // Disable drop if DB fails
+                lblDropPasteHint.Text = "Database connection failed.\nUpload/Paste disabled.";
             }
 
             SetupComboBoxes();
             LoadRecentFiles();
+
+            this.KeyPreview = true; // Allow form to preview key events
+            this.KeyDown += Form1_KeyDown; // Add KeyDown handler
 
             panelContent.Visible = true;
             panelEncryptionSettings.Visible = false;
@@ -47,6 +61,94 @@ namespace SafeGuard
             panelFileManagement.Visible = false;
             compressionPanel.Visible = false;
             decompressionPanel.Visible = false;
+        }
+
+        private void dataGridViewFiles_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check if the click is on a valid row (not header or invalid index)
+            if (e.RowIndex < 0 || e.RowIndex >= dataGridViewFiles.RowCount)
+            {
+                return;
+            }
+
+            // Ensure the DataSource is a DataTable
+            if (!(dataGridViewFiles.DataSource is DataTable dt))
+            {
+                Console.WriteLine("DataSource is not a DataTable or is null.");
+                return;
+            }
+
+            // Get the DataRow corresponding to the clicked DataGridView row
+            // Use Rows[e.RowIndex].DataBoundItem which is a DataRowView, then get its Row
+            if (!(dataGridViewFiles.Rows[e.RowIndex].DataBoundItem is DataRowView drv))
+            {
+                Console.WriteLine($"Could not get DataRowView for row index {e.RowIndex}.");
+                return;
+            }
+            DataRow dr = drv.Row;
+
+
+            string? filePath = null;
+            string? fileName = null;
+            string pathColumnName = "";
+            string nameColumnName = "";
+            string selectedTableType = cmbTables.SelectedItem?.ToString() ?? "All Files"; // Default to All if null
+
+
+            // Determine the correct column names based on the selected table type
+            switch (selectedTableType)
+            {
+                case "All Files":
+                    pathColumnName = "file_path";
+                    nameColumnName = "file_name";
+                    break;
+                case "Encrypted Files":
+                    // The path/name of the *encrypted* file itself
+                    pathColumnName = "encrypted_file_path";
+                    nameColumnName = "encrypted_file_name";
+                    break;
+                case "Compressed Files":
+                    // The path/name of the *compressed* file itself
+                    pathColumnName = "compressed_file_path";
+                    nameColumnName = "compressed_file_name";
+                    break;
+                default:
+                    Console.WriteLine($"Unknown table type selected: {selectedTableType}");
+                    return; // Don't know which columns to use
+            }
+
+            try
+            {
+                // Check if the required columns exist in the DataTable
+                if (dt.Columns.Contains(pathColumnName) && dt.Columns.Contains(nameColumnName))
+                {
+                    // Get the file path and name from the DataRow, handling potential DBNull
+                    filePath = dr[pathColumnName] != DBNull.Value ? dr[pathColumnName].ToString() : null;
+                    fileName = dr[nameColumnName] != DBNull.Value ? dr[nameColumnName].ToString() : "Image"; // Default title
+
+                    if (!string.IsNullOrEmpty(filePath))
+                    {
+                        // Use the existing helper method to attempt showing the image
+                        // It handles checking the extension and file existence internally
+                        ShowImageInNewWindow(filePath, $"Viewer: {fileName}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"File path is null or empty in column '{pathColumnName}' for row {e.RowIndex}.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Required columns ('{pathColumnName}' or '{nameColumnName}') not found in the DataTable for table type '{selectedTableType}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or show error specific to accessing grid data
+                Console.WriteLine($"Error accessing data grid row {e.RowIndex}: {ex.Message}");
+                // Optionally show a message to the user:
+                // ShowError($"Could not retrieve file details from the selected row.\n{ex.Message}");
+            }
         }
 
         private void SetupComboBoxes()
@@ -70,6 +172,191 @@ namespace SafeGuard
             configureDropDown(decryptionFileSelection);
             configureDropDown(fileSelectionCompression);
             configureDropDown(fileSelectionDecompression);
+        }
+
+        private string EnsureSavedImagesFolder()
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string targetDir = Path.Combine(baseDir, SavedImagesFolderName);
+
+                if (!Directory.Exists(targetDir))
+                {
+                    Directory.CreateDirectory(targetDir);
+                }
+                return targetDir;
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Error creating or accessing the '{SavedImagesFolderName}' directory: {ex.Message}");
+                return string.Empty; // Indicate failure
+            }
+        }
+
+        private string GenerateUniqueImagePath(string targetFolder, string baseName, string extension)
+        {
+            string uniqueName = $"{Path.GetFileNameWithoutExtension(baseName)}_{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+            return Path.Combine(targetFolder, uniqueName);
+        }
+
+        private bool ProcessAndSaveDroppedFile(string sourceFilePath)
+        {
+            if (_dbManager == null || string.IsNullOrEmpty(_connectionString) || _connectionString.StartsWith("Server=none;"))
+            { ShowError("Database not available. Cannot save file."); return false; }
+            if (!File.Exists(sourceFilePath))
+            { ShowError($"Source file not found: {sourceFilePath}"); return false; }
+
+            string extension = Path.GetExtension(sourceFilePath);
+            if (!_supportedImageExtensions.Contains(extension))
+            {
+                // Silently ignore non-image files or show a collective message later
+                Console.WriteLine($"Skipped non-image file: {Path.GetFileName(sourceFilePath)}");
+                return false; // Indicate not processed as an image
+            }
+
+            string targetFolder = EnsureSavedImagesFolder();
+            if (string.IsNullOrEmpty(targetFolder)) return false; // Error occurred creating folder
+
+            string destinationPath = GenerateUniqueImagePath(targetFolder, Path.GetFileName(sourceFilePath), extension);
+
+            try
+            {
+                File.Copy(sourceFilePath, destinationPath, true); // Overwrite if somehow exists
+                long fileId = _dbManager.InsertFileRecord(destinationPath); // Add to DB
+                Console.WriteLine($"Successfully added dropped file: {Path.GetFileName(destinationPath)} (ID: {fileId})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Error processing dropped file '{Path.GetFileName(sourceFilePath)}':\n{ex.Message}");
+                // Clean up potentially partially created file
+                if (File.Exists(destinationPath))
+                {
+                    try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
+                }
+                return false;
+            }
+        }
+
+        private bool ProcessAndSavePastedImage(Image image)
+        {
+            if (_dbManager == null || string.IsNullOrEmpty(_connectionString) || _connectionString.StartsWith("Server=none;"))
+            { ShowError("Database not available. Cannot save image."); return false; }
+            if (image == null) { return false; } // Nothing to paste
+
+            string targetFolder = EnsureSavedImagesFolder();
+            if (string.IsNullOrEmpty(targetFolder)) return false;
+
+            // Save pasted images as PNG by default
+            string destinationPath = GenerateUniqueImagePath(targetFolder, "pasted_image", ".png");
+
+            try
+            {
+                image.Save(destinationPath, ImageFormat.Png);
+                long fileId = _dbManager.InsertFileRecord(destinationPath); // Add to DB
+                Console.WriteLine($"Successfully added pasted image: {Path.GetFileName(destinationPath)} (ID: {fileId})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Error saving pasted image:\n{ex.Message}");
+                // Clean up potentially partially created file
+                if (File.Exists(destinationPath))
+                {
+                    try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
+                }
+                return false;
+            }
+            finally
+            {
+                // The image from clipboard should be disposed after we're done saving it.
+                image?.Dispose();
+            }
+        }
+
+        // --- NEW EVENT HANDLERS ---
+
+        private void panelDropPasteTarget_DragEnter(object sender, DragEventArgs e)
+        {
+            // Check if the data being dragged is file data
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy; // Show the copy cursor
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None; // Show the standard cursor
+            }
+        }
+
+        private void panelDropPasteTarget_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                int successCount = 0;
+                int skippedCount = 0;
+
+                foreach (string file in files)
+                {
+                    if (ProcessAndSaveDroppedFile(file))
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        // Check if it was skipped because it wasn't an image
+                        if (_supportedImageExtensions.Contains(Path.GetExtension(file)))
+                            skippedCount++; // It was an image but failed processing
+                        // else: it was skipped because it wasn't an image (already logged)
+                    }
+                }
+
+                if (successCount > 0)
+                {
+                    MessageBox.Show($"{successCount} image(s) added successfully.", "Drag & Drop Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    LoadRecentFiles(); // Refresh the recent files panel
+                }
+                else if (skippedCount > 0)
+                {
+                    MessageBox.Show($"No images were added. Failed to process {skippedCount} image(s). Check error messages or console output.", "Drag & Drop Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                // If only non-image files were dropped, no message is shown (they are silently ignored)
+            }
+        }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Check for Ctrl+V only when the main content panel is visible
+            if (e.Control && e.KeyCode == Keys.V && panelContent.Visible)
+            {
+                // Check if the clipboard contains image data
+                if (Clipboard.ContainsImage())
+                {
+                    Image pastedImage = null;
+                    try
+                    {
+                        pastedImage = Clipboard.GetImage(); // Get the image
+                        if (ProcessAndSavePastedImage(pastedImage)) // Process and save (includes dispose)
+                        {
+                            MessageBox.Show("Image pasted and saved successfully.", "Paste Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadRecentFiles(); // Refresh recent files
+                        }
+                        // If ProcessAndSavePastedImage returns false, it already showed an error
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowError($"Error getting image from clipboard: {ex.Message}");
+                        pastedImage?.Dispose(); // Ensure disposal even on error getting it
+                    }
+                    finally
+                    {
+                        e.Handled = true; // Mark event as handled to prevent further processing
+                        e.SuppressKeyPress = true; // Prevent the character from being entered if applicable
+                    }
+                }
+            }
         }
 
         private void LoadRecentFiles()
@@ -368,6 +655,7 @@ namespace SafeGuard
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
+                    string savedFilePath = sfd.FileName;
                     try
                     {
                         // 6. Write Encrypted Data to File
@@ -377,6 +665,12 @@ namespace SafeGuard
                         _dbManager.InsertEncryptedRecord(originalFileId, keyString, sfd.FileName);
 
                         MessageBox.Show("File encrypted and saved successfully!", "Encryption Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        if (method == "Pixel Scrambling")
+                        {
+                            ShowImageInNewWindow(savedFilePath, $"Encrypted: {Path.GetFileName(savedFilePath)} (Scrambled)");
+                        }
+
                         LoadImageFilesForEncryption(); // Refresh the source list
                         encryptionKeyBox.Clear(); // Clear key for next operation
                     }
@@ -510,6 +804,7 @@ namespace SafeGuard
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
+                    string savedFilePath = sfd.FileName;
                     try
                     {
                         // 7. Write Decrypted Data to File
@@ -519,6 +814,9 @@ namespace SafeGuard
                         _dbManager.InsertDerivedFileRecord(sfd.FileName);
 
                         MessageBox.Show("File decrypted and saved successfully!", "Decryption Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        ShowImageInNewWindow(savedFilePath, $"Decrypted: {Path.GetFileName(savedFilePath)}");
+
                         LoadEncryptedFilesForDecryption(); // Refresh the source list
                         decryptionKey.Clear(); // Clear the key
                     }
@@ -599,6 +897,9 @@ namespace SafeGuard
                         _dbManager.InsertCompressedFileRecord(destinationFilePath, originalFileId);
 
                         MessageBox.Show("Image optimized and saved successfully!", "Compression Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        ShowImageInNewWindow(destinationFilePath, $"Compressed: {Path.GetFileName(destinationFilePath)}");
+
                         LoadImageFilesForCompression(); // Refresh source list
                         // Consider also refreshing the decompression list if the UI allows immediate decompression
                         // LoadCompressedFilesForDecompression();
@@ -680,6 +981,9 @@ namespace SafeGuard
                         _dbManager.InsertDerivedFileRecord(destinationFilePath);
 
                         MessageBox.Show("File decompressed and saved successfully!", "Decompression Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        ShowImageInNewWindow(destinationFilePath, $"Decompressed: {Path.GetFileName(destinationFilePath)}");
+
                         LoadCompressedFilesForDecompression(); // Refresh the source list
                     }
                     catch (NotSupportedException ex)
@@ -717,6 +1021,42 @@ namespace SafeGuard
                 case ".tif": return ImageFormat.Tiff;
                 case ".ico": return ImageFormat.Icon;
                 default: return null;
+            }
+        }
+
+        private void ShowImageInNewWindow(string imagePath, string title)
+        {
+            if (string.IsNullOrEmpty(imagePath)) return; // No path provided
+
+            try
+            {
+                if (!File.Exists(imagePath))
+                {
+                    // Don't show error here, as the primary operation succeeded.
+                    // Just log it or silently fail to open viewer.
+                    Console.WriteLine($"ImageViewer: File not found at {imagePath}");
+                    return;
+                }
+
+                // Check for common, viewable image extensions
+                string[] supportedExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif" };
+                string extension = Path.GetExtension(imagePath).ToLowerInvariant();
+
+                if (!supportedExtensions.Contains(extension))
+                {
+                    Console.WriteLine($"ImageViewer: File type '{extension}' not supported for viewing ({Path.GetFileName(imagePath)}).");
+                    return; // Not a displayable image type
+                }
+
+                // Create and show the viewer form (modelessly)
+                ImageViewerForm viewer = new ImageViewerForm(imagePath, title);
+                viewer.Show(); // Use Show() to not block the main UI
+            }
+            catch (Exception ex)
+            {
+                // Show an error specific to the viewer failing, but don't interrupt main flow.
+                MessageBox.Show($"Could not open image viewer for '{Path.GetFileName(imagePath)}'.\nReason: {ex.Message}",
+                                "Image Viewer Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

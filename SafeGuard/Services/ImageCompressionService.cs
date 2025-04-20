@@ -7,11 +7,6 @@ namespace SafeGuard.Services
 {
     public static class ImageCompressionService
     {
-        /// <summary>
-        /// Compresses (optimizes) an image by saving it in a specified format with quality settings.
-        /// </summary>
-        /// <param name="sourceFilePath">Path to the original image.</param>
-        /// <param name="destinationFilePath">Path to save the optimized image.</param>
         public static void CompressImage(string sourceFilePath, string destinationFilePath)
         {
             // Load the original image
@@ -31,7 +26,6 @@ namespace SafeGuard.Services
                         if (encoder != null)
                         {
                             encoderParams = new EncoderParameters(1);
-                            // Use a reasonable quality setting like 85L
                             encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 85L);
                         }
                         break;
@@ -39,7 +33,7 @@ namespace SafeGuard.Services
                     case ".png":
                         targetFormat = ImageFormat.Png;
                         // PNG compression options via EncoderParameters are limited/less effective
-                        // than specialized PNG optimization tools. Saving normally is usually sufficient.
+                        // than specialized PNG optimization tools. Saving normally is sufficient.
                         // encoder = GetEncoder(targetFormat);
                         // encoderParams = new EncoderParameters(1);
                         // encoderParams.Param[0] = new EncoderParameter(Encoder.Compression, (long)EncoderValue.CompressionLZW); // Example, may vary
@@ -47,17 +41,12 @@ namespace SafeGuard.Services
 
                     case ".bmp":
                         targetFormat = ImageFormat.Bmp;
-                        // BMP is generally uncompressed
                         break;
-
-                    // Add cases for other formats like GIF, TIFF if needed
-                    // case ".gif": targetFormat = ImageFormat.Gif; break;
 
                     default:
                         throw new NotSupportedException($"Saving to '{destinationExtension}' format is not currently supported.");
                 }
 
-                // Save the image
                 if (encoder != null && encoderParams != null)
                 {
                     originalBitmap.Save(destinationFilePath, encoder, encoderParams);
@@ -70,12 +59,6 @@ namespace SafeGuard.Services
             }
         }
 
-        /// <summary>
-        /// "Decompresses" an image - essentially loads a potentially compressed format
-        /// and saves it, potentially to a different format or with maximum quality settings.
-        /// </summary>
-        /// <param name="compressedFilePath">Path to the (potentially) compressed image.</param>
-        /// <param name="outputFilePath">Path to save the decompressed/re-saved image.</param>
         public static void DecompressImage(string compressedFilePath, string outputFilePath)
         {
              using (Bitmap sourceBitmap = new Bitmap(compressedFilePath))
@@ -113,8 +96,6 @@ namespace SafeGuard.Services
                         break;
 
                     default:
-                         // Fallback to saving as PNG if extension is unknown/unsupported for saving
-                        // or throw an exception if strict format adherence is required.
                         targetFormat = ImageFormat.Png;
                         outputFilePath = Path.ChangeExtension(outputFilePath, ".png"); // Ensure extension matches format
                         // Alternatively: throw new NotSupportedException($"Cannot decompress/save to '{destExtension}'.");

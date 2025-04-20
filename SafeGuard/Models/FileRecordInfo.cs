@@ -29,7 +29,6 @@ namespace SafeGuard.Models
             FilePath = path;
             UploadedOn = uploaded;
         }
-         // Constructor without ID (for recent files display maybe)
         public FileRecordInfo(string name, double size, string type)
         {
             FileName = name;

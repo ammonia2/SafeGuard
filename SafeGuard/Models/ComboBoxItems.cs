@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SafeGuard.Models
 {
-    // Helper class to store both display text & ID for general ComboBoxes
+    // to store both display text & ID for general ComboBoxes
     public class ComboboxItem
     {
         public string Text { get; set; }
@@ -14,7 +14,6 @@ namespace SafeGuard.Models
         public override string ToString() => Text; // Ensures ComboBox displays Text
     }
 
-    // Helper class specific to the decryption dropdown
     public class ComboBoxEncryptedItem
     {
         public int EncryptedId { get; set; }

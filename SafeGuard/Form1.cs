@@ -10,6 +10,7 @@ using System.Drawing.Imaging; // Needed for ImageFormat
 using System.IO; // Needed for Path, File, Directory
 using System.Linq; // Needed for Linq extension methods like Contains
 using System.Security.Cryptography;
+using System.Text; // Needed for StringBuilder
 using System.Windows.Forms;
 
 namespace SafeGuard
@@ -19,11 +20,9 @@ namespace SafeGuard
         private readonly string _connectionString;
         private readonly DatabaseManager _dbManager;
         private const string SavedImagesFolderName = "savedimages"; // Subfolder name
-        private readonly HashSet<string> _supportedImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ".png", ".jpg", ".jpeg", ".bmp" // Add more if needed
-        };
-
+        private ImageViewerForm _batchImageViewer = null;
+        private const int MaxBatchSize = 10; // Maximum files to process at once
+        private bool _limitMessageShown = false; // Flag to show limit message only once per check attempt
         public Form1()
         {
             InitializeComponent();
@@ -63,6 +62,10 @@ namespace SafeGuard
             decompressionPanel.Visible = false;
         }
 
+        private readonly HashSet<string> _supportedImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png", ".jpg", ".jpeg", ".bmp" // Add more if needed
+        };
         private void dataGridViewFiles_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             // Check if the click is on a valid row (not header or invalid index)
@@ -153,25 +156,63 @@ namespace SafeGuard
 
         private void SetupComboBoxes()
         {
-            decryptionMethodSelection.Items.Clear();
+            // --- ENSURE THESE LINES ARE PRESENT ---
+            decryptionMethodSelection.Items.Clear(); // Clear any existing items first
             decryptionMethodSelection.Items.Add("AES");
             decryptionMethodSelection.Items.Add("Pixel Scrambling");
+            // ---------------------------------------
 
+            // Setup for the File Management dropdown
             cmbTables.Items.Clear();
             cmbTables.Items.Add("All Files");
             cmbTables.Items.Add("Encrypted Files");
             cmbTables.Items.Add("Compressed Files");
             cmbTables.SelectedIndexChanged += cmbTables_SelectedIndexChanged;
+        }
 
-            Action<ComboBox> configureDropDown = cb =>
+        //Helper to update the TextBox display
+        private void UpdateSelectionDisplay(CheckedListBox clb, TextBox txtDisplay)
+        {
+            if (clb == null || txtDisplay == null) return;
+
+            int count = clb.CheckedItems.Count;
+            if (count == 0)
             {
-                cb.MaxDropDownItems = 5;
-                cb.DropDownHeight = 100;
-            };
-            configureDropDown(fileSelectionEncryption);
-            configureDropDown(decryptionFileSelection);
-            configureDropDown(fileSelectionCompression);
-            configureDropDown(fileSelectionDecompression);
+                txtDisplay.Text = "No selection";
+            }
+            else if (count == 1)
+            {
+                // Display the single selected item's text (might be truncated)
+                txtDisplay.Text = clb.CheckedItems[0]?.ToString() ?? "1 file selected";
+            }
+            else
+            {
+                txtDisplay.Text = $"{count} files selected";
+            }
+        }
+
+        // SHARED Click handler for ALL dropdown buttons
+        private void btnDropdown_Click(object sender, EventArgs e)
+        {
+            Button btn = sender as Button;
+            CheckedListBox clb = null;
+
+            // Determine which CheckedListBox to toggle based on the button clicked
+            if (btn == btnEncryptDropdown) clb = checkedListBoxEncrypt;
+            else if (btn == btnDecryptDropdown) clb = checkedListBoxDecrypt;
+            else if (btn == btnCompressDropdown) clb = checkedListBoxCompress;
+            else if (btn == btnDecompressDropdown) clb = checkedListBoxDecompress;
+
+            if (clb != null)
+            {
+                clb.Visible = !clb.Visible; // Toggle visibility
+                if (clb.Visible)
+                {
+                    clb.BringToFront(); // Ensure it's drawn on top
+                    // Optional: Give focus to the list when opened
+                    clb.Focus();
+                }
+            }
         }
 
         private string EnsureSavedImagesFolder()
@@ -465,11 +506,29 @@ namespace SafeGuard
             }
         }
 
-        private void LoadImageFilesForEncryption() => LoadComboBoxData(fileSelectionEncryption, () => _dbManager.GetImageFilesForComboBox().ConvertAll(x => (object)x));
-        private void LoadEncryptedFilesForDecryption() => LoadComboBoxData(decryptionFileSelection, () => _dbManager.GetEncryptedFilesForComboBox().ConvertAll(x => (object)x));
-        private void LoadImageFilesForCompression() => LoadComboBoxData(fileSelectionCompression, () => _dbManager.GetImageFilesForComboBox().ConvertAll(x => (object)x));
-        private void LoadCompressedFilesForDecompression() => LoadComboBoxData(fileSelectionDecompression, () => _dbManager.GetCompressedFilesForComboBox().ConvertAll(x => (object)x));
+        private void LoadCheckedListBoxData(CheckedListBox clb, Func<List<object>> dataSourceFunc)
+        {
+            if (_dbManager == null) return;
+            clb.Items.Clear(); // Clear existing items
+            try
+            {
+                var items = dataSourceFunc();
+                foreach (var item in items)
+                {
+                    // Add the object itself. The ToString() override will display correctly.
+                    clb.Items.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Error loading data for {clb.Name}: {ex.Message}");
+            }
+        }
 
+        private void LoadImageFilesForEncryption() => LoadCheckedListBoxData(checkedListBoxEncrypt, () => _dbManager.GetImageFilesForComboBox().ConvertAll(x => (object)x));
+        private void LoadEncryptedFilesForDecryption() => LoadCheckedListBoxData(checkedListBoxDecrypt, () => _dbManager.GetEncryptedFilesForComboBox().ConvertAll(x => (object)x));
+        private void LoadImageFilesForCompression() => LoadCheckedListBoxData(checkedListBoxCompress, () => _dbManager.GetImageFilesForComboBox().ConvertAll(x => (object)x));
+        private void LoadCompressedFilesForDecompression() => LoadCheckedListBoxData(checkedListBoxDecompress, () => _dbManager.GetCompressedFilesForComboBox().ConvertAll(x => (object)x));
         private void ShowPanel(Panel panelToShow)
         {
             panelContent.Visible = false;
@@ -516,22 +575,36 @@ namespace SafeGuard
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) => ShowPanel(panelContent);
-        private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) // Encryption
         {
             ShowPanel(panelEncryptionSettings);
-            LoadImageFilesForEncryption();
+            LoadImageFilesForEncryption(); // Use new method
             if (encryptionMethodSelection.Items.Count > 0 && encryptionMethodSelection.SelectedIndex < 0)
                 encryptionMethodSelection.SelectedIndex = 0;
             encryptionKeyBox.Clear();
         }
-        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+
+        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) // Decryption
         {
             ShowPanel(decryptionPanel);
-            LoadEncryptedFilesForDecryption();
+            LoadEncryptedFilesForDecryption(); // Use new method
             if (decryptionMethodSelection.Items.Count > 0 && decryptionMethodSelection.SelectedIndex < 0)
                 decryptionMethodSelection.SelectedIndex = 0;
             decryptionKey.Clear();
         }
+
+        private void linkLabel5_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) // Compression
+        {
+            ShowPanel(compressionPanel);
+            LoadImageFilesForCompression(); // Use new method
+        }
+
+        private void linkLabel6_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) // Decompression
+        {
+            ShowPanel(decompressionPanel);
+            LoadCompressedFilesForDecompression(); // Use new method
+        }
+
         private void linkLabel4_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             ShowPanel(panelFileManagement);
@@ -540,35 +613,102 @@ namespace SafeGuard
             else
                 LoadAllFilesToGrid();
         }
-        private void linkLabel5_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            ShowPanel(compressionPanel);
-            LoadImageFilesForCompression();
-        }
-
-        private void linkLabel6_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            ShowPanel(decompressionPanel);
-            LoadCompressedFilesForDecompression();
-        }
         private void viewAllFilesButton_Click(object sender, EventArgs e)
         {
             linkLabel4_LinkClicked(sender, null);
         }
 
+        private void checkedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            CheckedListBox clb = sender as CheckedListBox;
+            if (clb == null) return;
+
+            // --- Selection Limit Logic (Keep as is) ---
+            if (e.NewValue == CheckState.Checked)
+            {
+                if (clb.CheckedItems.Count >= MaxBatchSize)
+                {
+                    e.NewValue = CheckState.Unchecked;
+                    if (!_limitMessageShown)
+                    {
+                        MessageBox.Show($"You can select a maximum of {MaxBatchSize} files at a time.",
+                                       "Selection Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        _limitMessageShown = true;
+                    }
+                    return; // Important: Return here if limit reached, don't schedule update
+                }
+                else
+                {
+                    _limitMessageShown = false;
+                }
+            }
+            else
+            {
+                _limitMessageShown = false;
+            }
+            // --- End Selection Limit Logic ---
+
+
+            // --- Schedule UI Update ---
+            // Use BeginInvoke because ItemCheck fires *before* the CheckedItems collection updates.
+            // This ensures the count/text is correct when UpdateSelectionDisplay runs.
+            this.BeginInvoke((MethodInvoker)delegate
+            {
+                TextBox txt = null;
+                if (clb == checkedListBoxEncrypt) txt = txtEncryptSelection;
+                else if (clb == checkedListBoxDecrypt) txt = txtDecryptSelection;
+                else if (clb == checkedListBoxCompress) txt = txtCompressSelection;
+                else if (clb == checkedListBoxDecompress) txt = txtDecompressSelection;
+
+                if (txt != null)
+                {
+                    UpdateSelectionDisplay(clb, txt);
+                }
+            });
+            // --- End Schedule UI Update ---
+        }
+
+        private void checkedListBox_Leave(object sender, EventArgs e)
+        {
+            CheckedListBox clb = sender as CheckedListBox;
+            if (clb != null)
+            {
+                // Check if focus is moving to the corresponding dropdown button.
+                // If so, don't hide the list immediately, let the button click handle it.
+                Control focusedControl = this.ActiveControl; // Check which control has focus now
+                bool focusMovedToDropdownButton =
+                    (clb == checkedListBoxEncrypt && focusedControl == btnEncryptDropdown) ||
+                    (clb == checkedListBoxDecrypt && focusedControl == btnDecryptDropdown) ||
+                    (clb == checkedListBoxCompress && focusedControl == btnCompressDropdown) ||
+                    (clb == checkedListBoxDecompress && focusedControl == btnDecompressDropdown);
+
+                if (!focusMovedToDropdownButton)
+                {
+                    clb.Visible = false; // Hide the list when focus moves away
+
+                    // Optional: Update display one last time on leave, though BeginInvoke in ItemCheck is usually sufficient
+                    //TextBox txt = null;
+                    //if (clb == checkedListBoxEncrypt) txt = txtEncryptSelection;
+                    //else if (clb == checkedListBoxDecrypt) txt = txtDecryptSelection;
+                    //else if (clb == checkedListBoxCompress) txt = txtCompressSelection;
+                    //else if (clb == checkedListBoxDecompress) txt = txtDecompressSelection;
+                    //if (txt != null) UpdateSelectionDisplay(clb, txt);
+                }
+            }
+        }
+
+        // --- Batch Encrypt Button Click ---
         private void encryptButton_Click(object sender, EventArgs e)
         {
             if (_dbManager == null) { ShowError("Database connection not initialized."); return; }
-            if (fileSelectionEncryption.SelectedItem == null) { ShowError("Please select an image file to encrypt."); return; }
+            if (checkedListBoxEncrypt.CheckedItems.Count == 0) { ShowError($"Please select at least one image file (up to {MaxBatchSize}) to encrypt."); return; }
             if (encryptionMethodSelection.SelectedItem == null) { ShowError("Please select an encryption method."); return; }
 
-            // 1. Get Selected File Info
-            ComboboxItem selectedFile = (ComboboxItem)fileSelectionEncryption.SelectedItem;
-            int originalFileId = (int)selectedFile.Value;
             string method = encryptionMethodSelection.SelectedItem.ToString() ?? "";
-            string keyString = encryptionKeyBox.Text; // Key entered by user
+            string keyString = encryptionKeyBox.Text;
+            string? outputFolder = null; // To store the chosen output directory
 
-            // 2. Validate Key Format (Early Exit)
+            // 1. Validate Key Format (Once before loop)
             try
             {
                 if (method == "AES" && (keyString.Length != 16 && keyString.Length != 32))
@@ -582,425 +722,512 @@ namespace SafeGuard
                 return;
             }
 
-            // 3. Get Source File Path and Validate Existence
-            string? sourceFilePath = _dbManager.GetFilePath(originalFileId);
-            if (string.IsNullOrEmpty(sourceFilePath))
+            // 2. Get Output Folder (Once before loop)
+            using (var fbd = new FolderBrowserDialog())
             {
-                ShowError($"Source file path is missing for the selected file (ID: {originalFileId}).");
-                LoadImageFilesForEncryption(); // Refresh list
-                return;
-            }
-            if (!File.Exists(sourceFilePath))
-            {
-                ShowError($"Source file not found on disk. Path: {sourceFilePath}");
-                LoadImageFilesForEncryption(); // Refresh list
-                return;
-            }
-
-            // 4. Perform Encryption
-            byte[] processedData;
-            string suggestedExtension = ".bin"; // Default
-
-            try
-            {
-                if (method == "AES")
+                fbd.Description = "Select Folder to Save Encrypted Files";
+                fbd.ShowNewFolderButton = true;
+                if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    byte[] originalData = File.ReadAllBytes(sourceFilePath);
-                    processedData = EncryptionService.AesEncrypt(originalData, keyString);
-                    suggestedExtension = ".enc";
+                    outputFolder = fbd.SelectedPath;
                 }
-                else // Pixel Scrambling
+                else
                 {
-                    int scrambleSeed = int.Parse(keyString); // Safe parse after validation
-                    using (Bitmap originalBitmap = new Bitmap(sourceFilePath))
-                    using (Bitmap scrambledBitmap = EncryptionService.PixelScramble(originalBitmap, scrambleSeed))
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        // Always save scrambled image as PNG to preserve data, regardless of original format
-                        scrambledBitmap.Save(ms, ImageFormat.Png);
-                        processedData = ms.ToArray();
-                    }
-                    suggestedExtension = ".png"; // The scrambled file itself is a PNG
+                    MessageBox.Show("Operation cancelled: No output folder selected.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return; // User cancelled folder selection
                 }
             }
-            catch (ArgumentException ex) // Catch specific errors from services
-            {
-                ShowError($"Encryption setup error: {ex.Message}");
-                return;
-            }
-            catch (CryptographicException ex)
-            {
-                 ShowError($"Cryptography error during encryption: {ex.Message}");
-                 return;
-            }
-            catch (Exception ex) // Catch-all for file reading, bitmap processing etc.
-            {
-                ShowError($"An error occurred during processing: {ex.Message}\n{ex.InnerException?.Message}");
-                return;
-            }
 
-            // 5. Prompt User to Save Encrypted File
-            using (SaveFileDialog sfd = new SaveFileDialog())
+            // 3. Process Selected Files
+            int successCount = 0;
+            List<string> errors = new List<string>();
+            List<string> successfulOutputPaths = new List<string>(); // Collect paths for viewer
+            Cursor = Cursors.WaitCursor; // Show wait cursor
+            checkedListBoxEncrypt.Visible = false; // Hide dropdown
+
+            foreach (object item in checkedListBoxEncrypt.CheckedItems)
             {
-                sfd.Title = $"Save {method} Encrypted File";
-                string originalFileName = Path.GetFileNameWithoutExtension(sourceFilePath);
-                sfd.FileName = $"{originalFileName}_encrypted{suggestedExtension}";
+                ComboboxItem selectedFile = (ComboboxItem)item;
+                int originalFileId = (int)selectedFile.Value;
+                string? sourceFilePath = null;
+                string originalFileName = selectedFile.Text; // Use text from item
+                string destinationPath = null; // Store final path for cleanup/viewer
 
-                if (method == "AES")
-                    sfd.Filter = $"Encrypted File (*{suggestedExtension})|*{suggestedExtension}|All Files (*.*)|*.*";
-                else // Pixel Scrambling (result is PNG)
-                    sfd.Filter = $"PNG Image (*{suggestedExtension})|*{suggestedExtension}|All Files (*.*)|*.*";
-
-                sfd.DefaultExt = suggestedExtension.TrimStart('.');
-
-                if (sfd.ShowDialog() == DialogResult.OK)
+                try
                 {
-                    string savedFilePath = sfd.FileName;
-                    try
+                    // Get Source Path & Validate
+                    sourceFilePath = _dbManager.GetFilePath(originalFileId);
+                    if (string.IsNullOrEmpty(sourceFilePath)) throw new FileNotFoundException($"Source path missing in DB for {originalFileName} (ID: {originalFileId}).");
+                    if (!File.Exists(sourceFilePath)) throw new FileNotFoundException($"Source file not found on disk: {sourceFilePath}");
+
+                    // Perform Encryption
+                    byte[] processedData;
+                    string suggestedExtension = (method == "AES") ? ".enc" : ".png"; // Scrambled is PNG
+
+                    if (method == "AES")
                     {
-                        // 6. Write Encrypted Data to File
-                        File.WriteAllBytes(sfd.FileName, processedData);
-
-                        // 7. Add Record to Database
-                        _dbManager.InsertEncryptedRecord(originalFileId, keyString, sfd.FileName);
-
-                        MessageBox.Show("File encrypted and saved successfully!", "Encryption Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        if (method == "Pixel Scrambling")
-                        {
-                            ShowImageInNewWindow(savedFilePath, $"Encrypted: {Path.GetFileName(savedFilePath)} (Scrambled)");
-                        }
-
-                        LoadImageFilesForEncryption(); // Refresh the source list
-                        encryptionKeyBox.Clear(); // Clear key for next operation
+                        byte[] originalData = File.ReadAllBytes(sourceFilePath);
+                        processedData = EncryptionService.AesEncrypt(originalData, keyString);
                     }
-                    catch (Exception ex)
+                    else // Pixel Scrambling
                     {
-                        ShowError($"Error saving encrypted file or updating database: {ex.Message}");
-                        // Consider trying to delete the partially saved file if the DB insert fails
-                        if (File.Exists(sfd.FileName))
+                        int scrambleSeed = int.Parse(keyString); // Safe parse after validation
+                        using (Bitmap originalBitmap = new Bitmap(sourceFilePath))
+                        using (Bitmap scrambledBitmap = EncryptionService.PixelScramble(originalBitmap, scrambleSeed))
+                        using (MemoryStream ms = new MemoryStream())
                         {
-                             try { File.Delete(sfd.FileName); } catch { /* Ignore delete error */ }
+                            scrambledBitmap.Save(ms, ImageFormat.Png);
+                            processedData = ms.ToArray();
                         }
                     }
+
+                    // Construct Output Path (with uniqueness check)
+                    string outputFileNameBase = Path.GetFileNameWithoutExtension(originalFileName);
+                    string outputFileName = $"{outputFileNameBase}_encrypted{suggestedExtension}";
+                    destinationPath = Path.Combine(outputFolder, outputFileName);
+                    int counter = 1;
+                    while (File.Exists(destinationPath))
+                    {
+                        outputFileName = $"{outputFileNameBase}_encrypted_{counter++}{suggestedExtension}";
+                        destinationPath = Path.Combine(outputFolder, outputFileName);
+                    }
+
+                    // Write Encrypted Data & Add DB Record
+                    File.WriteAllBytes(destinationPath, processedData);
+                    _dbManager.InsertEncryptedRecord(originalFileId, keyString, destinationPath);
+
+                    // Collect path for viewer only if Pixel Scrambling (viewable)
+                    if (method == "Pixel Scrambling")
+                    {
+                        successfulOutputPaths.Add(destinationPath); // ADD TO LIST
+                    }
+                    successCount++;
                 }
+                catch (Exception ex)
+                {
+                    errors.Add($"Failed to encrypt '{originalFileName}': {ex.Message}");
+                    // Basic cleanup attempt if file was created before DB insert failed etc.
+                    if (destinationPath != null && File.Exists(destinationPath))
+                    {
+                        try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
+                    }
+                }
+            } // End foreach loop
+
+            Cursor = Cursors.Default; // Reset cursor
+
+            // 4. Show Summary Feedback
+            StringBuilder summary = new StringBuilder();
+            summary.AppendLine($"Batch Encryption Complete.");
+            summary.AppendLine($"Successfully encrypted: {successCount} file(s).");
+            summary.AppendLine($"Failed: {errors.Count} file(s).");
+            if (errors.Count > 0)
+            {
+                summary.AppendLine("\nErrors:");
+                errors.ForEach(err => summary.AppendLine($"- {err}"));
+                MessageBox.Show(summary.ToString(), "Encryption Summary", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+            else
+            {
+                MessageBox.Show(summary.ToString(), "Encryption Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // 5. Launch Single Viewer (if any viewable files)
+            if (successfulOutputPaths.Any())
+            {
+                // Close previous viewer instance if it exists and hasn't been closed/disposed
+                if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
+                {
+                    _batchImageViewer.Close(); // Close will trigger disposal via OnFormClosed
+                }
+                // Create and show the new viewer with the collected paths
+                _batchImageViewer = new ImageViewerForm(successfulOutputPaths, "Encryption Results (Scrambled Images)");
+                _batchImageViewer.Show(); // Show modelessly
+            }
+
+            // 6. Refresh UI
+            LoadImageFilesForEncryption(); // Refresh the source list
+            encryptionKeyBox.Clear();
+            UpdateSelectionDisplay(checkedListBoxEncrypt, txtEncryptSelection); // Reset display text
         }
 
+        // --- Batch Decrypt Button Click ---
         private void decryptButton_Click(object sender, EventArgs e)
         {
             if (_dbManager == null) { ShowError("Database connection not initialized."); return; }
-            if (decryptionFileSelection.SelectedItem == null) { ShowError("Please select a file to decrypt."); return; }
+            if (checkedListBoxDecrypt.CheckedItems.Count == 0) { ShowError($"Please select at least one file (up to {MaxBatchSize}) to decrypt."); return; }
             if (decryptionMethodSelection.SelectedItem == null) { ShowError("Please select a decryption method."); return; }
 
-            // 1. Get Selected Encrypted File Info
-            ComboBoxEncryptedItem selectedEncryptedFile = (ComboBoxEncryptedItem)decryptionFileSelection.SelectedItem;
-            int encryptedRecordId = selectedEncryptedFile.EncryptedId; // ID from 'encrypted' table link
-            int encryptedFileId = selectedEncryptedFile.FileId;       // ID from 'files' table (the encrypted file itself)
             string method = decryptionMethodSelection.SelectedItem.ToString() ?? "";
-            string typedKey = decryptionKey.Text;                   // Key entered by user
+            string typedKey = decryptionKey.Text;
+            string? outputFolder = null;
 
-            // 2. Validate Typed Key Against Stored Key
-            try
+            // 1. Get Output Folder
+            using (var fbd = new FolderBrowserDialog { /* ... setup ... */ })
             {
-                 string? storedKey = _dbManager.GetEncryptionKey(encryptedRecordId);
-                 if (storedKey == null)
-                     throw new KeyNotFoundException("Could not retrieve the stored encryption key for this file record.");
-
-                 if (typedKey != storedKey)
-                 {
-                    // More specific feedback *without* revealing the key
-                    if (method == "AES" && (typedKey.Length != 16 && typedKey.Length != 32))
-                        throw new ArgumentException("Invalid key length for AES decryption attempt.");
-                    if (method == "Pixel Scrambling" && !int.TryParse(typedKey, out _))
-                        throw new ArgumentException("Invalid key format for Pixel Scrambling decryption attempt (must be a number).");
-
-                    // Generic incorrect key message if format seems ok but value is wrong
-                    throw new ArgumentException("Incorrect decryption key provided.");
-                 }
-                 // Key matches stored key, proceed.
-            }
-             catch (Exception ex) // Catches ArgumentException, KeyNotFoundException, DB errors
-            {
-                 ShowError($"Key validation failed: {ex.Message}");
-                 return;
-            }
-
-            // 3. Get Original File Details (for saving correctly)
-            int? originalFileId = _dbManager.GetOriginalFileIdFromEncrypted(encryptedRecordId);
-            if (originalFileId == null) { ShowError("Critical error: Cannot find the link to the original file record."); return; }
-
-            string? originalFileType = _dbManager.GetFileType(originalFileId.Value);
-            string? originalFileName = _dbManager.GetFileName(originalFileId.Value);
-            if (string.IsNullOrEmpty(originalFileType) || string.IsNullOrEmpty(originalFileName))
-            {
-                ShowError("Critical error: Cannot retrieve original file details (name or type).");
-                return;
-            }
-
-            // 4. Get Encrypted File Path and Validate Existence
-            string? encryptedFilePath = _dbManager.GetFilePath(encryptedFileId);
-             if (string.IsNullOrEmpty(encryptedFilePath))
-            {
-                ShowError($"Encrypted file path is missing for the selected file (ID: {encryptedFileId}).");
-                LoadEncryptedFilesForDecryption(); // Refresh list
-                return;
-            }
-            if (!File.Exists(encryptedFilePath))
-            {
-                ShowError($"Encrypted file not found on disk. Path: {encryptedFilePath}");
-                LoadEncryptedFilesForDecryption(); // Refresh list
-                return;
-            }
-
-            // 5. Perform Decryption
-            byte[] decryptedData;
-            try
-            {
-                if (method == "AES")
+                fbd.Description = "Select Folder to Save Decrypted Files";
+                fbd.ShowNewFolderButton = true;
+                if (fbd.ShowDialog() != DialogResult.OK)
                 {
-                    byte[] encryptedBytes = File.ReadAllBytes(encryptedFilePath);
-                    decryptedData = EncryptionService.AesDecrypt(encryptedBytes, typedKey);
+                    MessageBox.Show("Operation cancelled: No output folder selected.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
-                else // Pixel Scrambling
+                outputFolder = fbd.SelectedPath;
+            }
+
+            // 2. Process Selected Files
+            int successCount = 0;
+            List<string> errors = new List<string>();
+            List<string> successfulOutputPaths = new List<string>(); // Collect paths for viewer
+            Cursor = Cursors.WaitCursor;
+            checkedListBoxDecrypt.Visible = false; // Hide dropdown
+
+            foreach (object item in checkedListBoxDecrypt.CheckedItems)
+            {
+                ComboBoxEncryptedItem selectedEncryptedFile = (ComboBoxEncryptedItem)item;
+                int encryptedRecordId = selectedEncryptedFile.EncryptedId;
+                int encryptedFileId = selectedEncryptedFile.FileId;
+                string encryptedFileName = selectedEncryptedFile.Text;
+                string destinationPath = null; // Store final path
+                string originalFileType = ""; // Store original type for viewer check
+
+                try
                 {
-                    int unscrambleSeed = int.Parse(typedKey); // Safe parse after validation
-                    using (Bitmap scrambledBitmap = new Bitmap(encryptedFilePath)) // Load the PNG file
-                    using (Bitmap unscrambledBitmap = EncryptionService.PixelUnscramble(scrambledBitmap, unscrambleSeed))
-                    using (MemoryStream ms = new MemoryStream())
+                    // Validate Key
+                    string? storedKey = _dbManager.GetEncryptionKey(encryptedRecordId);
+                    if (storedKey == null) throw new KeyNotFoundException($"Could not retrieve stored key for {encryptedFileName}.");
+                    if (typedKey != storedKey) throw new ArgumentException($"Incorrect key provided for {encryptedFileName}.");
+
+                    // Get Original File Details
+                    int? originalFileId = _dbManager.GetOriginalFileIdFromEncrypted(encryptedRecordId);
+                    if (originalFileId == null) throw new Exception($"Cannot find original file link for {encryptedFileName}.");
+                    originalFileType = _dbManager.GetFileType(originalFileId.Value);
+                    string? originalFileNameBase = _dbManager.GetFileName(originalFileId.Value);
+                    if (string.IsNullOrEmpty(originalFileType) || string.IsNullOrEmpty(originalFileNameBase)) throw new Exception($"Cannot retrieve original details for {encryptedFileName}.");
+
+
+                    // Get Encrypted File Path & Validate
+                    string? encryptedFilePath = _dbManager.GetFilePath(encryptedFileId);
+                    if (string.IsNullOrEmpty(encryptedFilePath)) throw new FileNotFoundException($"Encrypted path missing in DB for {encryptedFileName} (ID: {encryptedFileId}).");
+                    if (!File.Exists(encryptedFilePath)) throw new FileNotFoundException($"Encrypted file not found on disk: {encryptedFilePath}");
+
+                    // Perform Decryption
+                    byte[] decryptedData;
+                    if (method == "AES")
                     {
-                        // Save the unscrambled bitmap in its ORIGINAL format
-                        ImageFormat originalFormat = GetImageFormatFromExtension(originalFileType) ?? ImageFormat.Png; // Default to PNG if format unknown/unsupported
-                        unscrambledBitmap.Save(ms, originalFormat);
-                        decryptedData = ms.ToArray();
+                        byte[] encryptedBytes = File.ReadAllBytes(encryptedFilePath);
+                        decryptedData = EncryptionService.AesDecrypt(encryptedBytes, typedKey);
                     }
-                }
-            }
-            catch (CryptographicException ex) // Specific to AES issues (bad key, padding, corruption)
-            {
-                 ShowError($"Decryption failed. This often indicates an incorrect key or corrupted data.\nDetails: {ex.Message}");
-                 return;
-            }
-            catch (ArgumentException ex) // Catches bad image format on load, invalid key length in service etc.
-            {
-                 ShowError($"Decryption failed. The file might not be a valid '{method}' encrypted file, or another argument was invalid.\nDetails: {ex.Message}");
-                 return;
-            }
-             catch (Exception ex) // Catch-all for file reading, bitmap processing etc.
-            {
-                 ShowError($"An unexpected error occurred during decryption: {ex.Message}\n{ex.InnerException?.Message}");
-                 return;
-            }
-
-            // 6. Prompt User to Save Decrypted File
-            using (SaveFileDialog sfd = new SaveFileDialog())
-            {
-                sfd.Title = "Save Decrypted File";
-                // Suggest original name + "_decrypted" + original extension
-                sfd.FileName = Path.GetFileNameWithoutExtension(originalFileName) + "_decrypted" + originalFileType;
-                string filterExt = originalFileType.TrimStart('.').ToUpperInvariant();
-                sfd.Filter = $"{filterExt} Files (*{originalFileType})|*{originalFileType}|All Files (*.*)|*.*";
-                sfd.DefaultExt = originalFileType.TrimStart('.');
-
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    string savedFilePath = sfd.FileName;
-                    try
+                    else // Pixel Scrambling
                     {
-                        // 7. Write Decrypted Data to File
-                        File.WriteAllBytes(sfd.FileName, decryptedData);
-
-                        // 8. Add Record for the New Decrypted File
-                        _dbManager.InsertDerivedFileRecord(sfd.FileName);
-
-                        MessageBox.Show("File decrypted and saved successfully!", "Decryption Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        ShowImageInNewWindow(savedFilePath, $"Decrypted: {Path.GetFileName(savedFilePath)}");
-
-                        LoadEncryptedFilesForDecryption(); // Refresh the source list
-                        decryptionKey.Clear(); // Clear the key
-                    }
-                    catch (Exception ex)
-                    {
-                         ShowError($"Error saving decrypted file or updating database: {ex.Message}");
-                          // Consider trying to delete the partially saved file if the DB insert fails
-                        if (File.Exists(sfd.FileName))
+                        int unscrambleSeed = int.Parse(typedKey); // Key already validated
+                        using (Bitmap scrambledBitmap = new Bitmap(encryptedFilePath))
+                        using (Bitmap unscrambledBitmap = EncryptionService.PixelUnscramble(scrambledBitmap, unscrambleSeed))
+                        using (MemoryStream ms = new MemoryStream())
                         {
-                             try { File.Delete(sfd.FileName); } catch { /* Ignore delete error */ }
+                            ImageFormat originalFormat = GetImageFormatFromExtension(originalFileType) ?? ImageFormat.Png;
+                            unscrambledBitmap.Save(ms, originalFormat);
+                            decryptedData = ms.ToArray();
                         }
                     }
+
+                    // Construct Output Path (with uniqueness check)
+                    string outputFileNameBase = Path.GetFileNameWithoutExtension(originalFileNameBase);
+                    string outputFileName = $"{outputFileNameBase}_decrypted{originalFileType}";
+                    destinationPath = Path.Combine(outputFolder, outputFileName);
+                    int counter = 1;
+                    while (File.Exists(destinationPath))
+                    {
+                        outputFileName = $"{outputFileNameBase}_decrypted_{counter++}{originalFileType}";
+                        destinationPath = Path.Combine(outputFolder, outputFileName);
+                    }
+
+                    // Write Decrypted Data & Add DB Record
+                    File.WriteAllBytes(destinationPath, decryptedData);
+                    _dbManager.InsertDerivedFileRecord(destinationPath); // Record the new decrypted file
+
+                    // Collect path for viewer only if the original type was viewable
+                    if (_supportedImageExtensions.Contains(originalFileType.ToLowerInvariant()))
+                    {
+                        successfulOutputPaths.Add(destinationPath); // ADD TO LIST
+                    }
+
+                    successCount++;
                 }
+                catch (Exception ex)
+                {
+                    errors.Add($"Failed to decrypt '{encryptedFileName}': {ex.Message}");
+                    if (destinationPath != null && File.Exists(destinationPath))
+                    {
+                        try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
+                    }
+                }
+            } // End foreach
+
+            Cursor = Cursors.Default;
+
+            // 3. Show Summary Feedback
+            StringBuilder summary = new StringBuilder();
+            summary.AppendLine($"Batch Decryption Complete.");
+            summary.AppendLine($"Successfully decrypted: {successCount} file(s).");
+            summary.AppendLine($"Failed: {errors.Count} file(s).");
+            if (errors.Count > 0)
+            {
+                summary.AppendLine("\nErrors:");
+                errors.ForEach(err => summary.AppendLine($"- {err}"));
+                MessageBox.Show(summary.ToString(), "Decryption Summary", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+            else
+            {
+                MessageBox.Show(summary.ToString(), "Decryption Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // 4. Launch Single Viewer
+            if (successfulOutputPaths.Any())
+            {
+                if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
+                {
+                    _batchImageViewer.Close();
+                }
+                _batchImageViewer = new ImageViewerForm(successfulOutputPaths, "Decryption Results");
+                _batchImageViewer.Show();
+            }
+
+            // 5. Refresh UI
+            LoadEncryptedFilesForDecryption();
+            decryptionKey.Clear();
+            UpdateSelectionDisplay(checkedListBoxDecrypt, txtDecryptSelection);
         }
 
+        // --- Batch Compress Button Click ---
         private void compressButton_Click(object sender, EventArgs e)
         {
             if (_dbManager == null) { ShowError("Database connection not initialized."); return; }
-            if (fileSelectionCompression.SelectedItem == null) { ShowError("Please select an image file to optimize."); return; }
+            if (checkedListBoxCompress.CheckedItems.Count == 0) { ShowError($"Please select at least one image file (up to {MaxBatchSize}) to compress."); return; }
 
-            // 1. Get Selected File Info
-            ComboboxItem selectedFile = (ComboboxItem)fileSelectionCompression.SelectedItem;
-            int originalFileId = (int)selectedFile.Value;
+            string? outputFolder = null;
 
-            // 2. Get Source File Path and Validate Existence
-            string? sourceFilePath = _dbManager.GetFilePath(originalFileId);
-            if (string.IsNullOrEmpty(sourceFilePath))
+            // 1. Get Output Folder
+            using (var fbd = new FolderBrowserDialog { /* ... setup ... */ })
             {
-                ShowError($"Source file path is missing for the selected file (ID: {originalFileId}).");
-                LoadImageFilesForCompression(); // Refresh list
-                return;
-            }
-            if (!File.Exists(sourceFilePath))
-            {
-                ShowError($"Source file not found on disk. Path: {sourceFilePath}");
-                LoadImageFilesForCompression(); // Refresh list
-                return;
+                fbd.Description = "Select Folder to Save Compressed Files";
+                fbd.ShowNewFolderButton = true;
+                if (fbd.ShowDialog() != DialogResult.OK)
+                {
+                    MessageBox.Show("Operation cancelled: No output folder selected.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                outputFolder = fbd.SelectedPath;
             }
 
-            // 3. Prompt User for Save Location and Format
-            using (SaveFileDialog sfd = new SaveFileDialog())
+            // 2. Process Selected Files
+            int successCount = 0;
+            List<string> errors = new List<string>();
+            List<string> successfulOutputPaths = new List<string>(); // Collect paths for viewer
+            Cursor = Cursors.WaitCursor;
+            checkedListBoxCompress.Visible = false; // Hide dropdown
+
+            foreach (object item in checkedListBoxCompress.CheckedItems)
             {
-                sfd.Title = "Save Optimized Image";
-                string originalFileName = Path.GetFileNameWithoutExtension(sourceFilePath);
-                string originalExtension = Path.GetExtension(sourceFilePath).ToLowerInvariant();
+                ComboboxItem selectedFile = (ComboboxItem)item;
+                int originalFileId = (int)selectedFile.Value;
+                string originalFileName = selectedFile.Text;
+                string destinationPath = null; // Store final path
 
-                // Set appropriate filters based on original type
-                if (originalExtension == ".bmp")
+                try
                 {
-                    sfd.Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg|BMP Image (*.bmp)|*.bmp|All Files (*.*)|*.*";
-                    sfd.DefaultExt = "png";
-                    sfd.FileName = $"{originalFileName}_optimized.png";
-                }
-                else if (originalExtension == ".jpg" || originalExtension == ".jpeg")
-                {
-                     sfd.Filter = "JPEG Image (*.jpg)|*.jpg|PNG Image (*.png)|*.png|All Files (*.*)|*.*"; // Allow saving JPG as PNG too
-                     sfd.DefaultExt = "jpg";
-                     sfd.FileName = $"{originalFileName}_optimized.jpg";
-                }
-                 else // Default to PNG options (e.g., if original was PNG or other)
-                {
-                     sfd.Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg|All Files (*.*)|*.*"; // Allow saving PNG as JPG
-                     sfd.DefaultExt = "png";
-                     sfd.FileName = $"{originalFileName}_optimized.png";
-                }
+                    // Get Source Path & Validate
+                    string? sourceFilePath = _dbManager.GetFilePath(originalFileId);
+                    if (string.IsNullOrEmpty(sourceFilePath)) throw new FileNotFoundException($"Source path missing in DB for {originalFileName} (ID: {originalFileId}).");
+                    if (!File.Exists(sourceFilePath)) throw new FileNotFoundException($"Source file not found on disk: {sourceFilePath}");
 
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    string destinationFilePath = sfd.FileName; // The path chosen by the user
-
-                    try
+                    // Construct Output Path (with uniqueness check)
+                    string originalExtension = Path.GetExtension(originalFileName).ToLowerInvariant();
+                    // Simple heuristic: keep PNG/BMP as PNG, others as JPG for compression
+                    string targetExtension = (originalExtension == ".bmp" || originalExtension == ".png") ? ".png" : ".jpg";
+                    string outputFileNameBase = Path.GetFileNameWithoutExtension(originalFileName);
+                    string outputFileName = $"{outputFileNameBase}_compressed{targetExtension}";
+                    destinationPath = Path.Combine(outputFolder, outputFileName);
+                    int counter = 1;
+                    while (File.Exists(destinationPath))
                     {
-                        // 4. Perform Compression (Optimization)
-                        ImageCompressionService.CompressImage(sourceFilePath, destinationFilePath);
-
-                        // 5. Add Record to Database
-                        _dbManager.InsertCompressedFileRecord(destinationFilePath, originalFileId);
-
-                        MessageBox.Show("Image optimized and saved successfully!", "Compression Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        ShowImageInNewWindow(destinationFilePath, $"Compressed: {Path.GetFileName(destinationFilePath)}");
-
-                        LoadImageFilesForCompression(); // Refresh source list
-                        // Consider also refreshing the decompression list if the UI allows immediate decompression
-                        // LoadCompressedFilesForDecompression();
+                        outputFileName = $"{outputFileNameBase}_compressed_{counter++}{targetExtension}";
+                        destinationPath = Path.Combine(outputFolder, outputFileName);
                     }
-                    catch (NotSupportedException ex) // Specific exception from CompressImage
+
+                    // Perform Compression
+                    ImageCompressionService.CompressImage(sourceFilePath, destinationPath);
+
+                    // Add DB Record
+                    _dbManager.InsertCompressedFileRecord(destinationPath, originalFileId);
+
+                    // Compressed images are always viewable
+                    successfulOutputPaths.Add(destinationPath); // ADD TO LIST
+
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Failed to compress '{originalFileName}': {ex.Message}");
+                    if (destinationPath != null && File.Exists(destinationPath))
                     {
-                        ShowError($"Optimization failed: {ex.Message}");
-                    }
-                    catch (Exception ex) // Catch-all for file IO, DB errors etc.
-                    {
-                        ShowError($"Image optimization failed: {ex.Message}");
-                         // Consider trying to delete the partially saved file if the DB insert fails
-                        if (File.Exists(destinationFilePath))
-                        {
-                             try { File.Delete(destinationFilePath); } catch { /* Ignore delete error */ }
-                        }
+                        try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
                     }
                 }
+            } // End foreach
+
+            Cursor = Cursors.Default;
+
+            // 3. Show Summary Feedback
+            StringBuilder summary = new StringBuilder();
+            summary.AppendLine($"Batch Compression Complete.");
+            summary.AppendLine($"Successfully compressed: {successCount} file(s).");
+            summary.AppendLine($"Failed: {errors.Count} file(s).");
+            if (errors.Count > 0)
+            {
+                summary.AppendLine("\nErrors:");
+                errors.ForEach(err => summary.AppendLine($"- {err}"));
+                MessageBox.Show(summary.ToString(), "Compression Summary", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+            else
+            {
+                MessageBox.Show(summary.ToString(), "Compression Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // 4. Launch Single Viewer
+            if (successfulOutputPaths.Any())
+            {
+                if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
+                {
+                    _batchImageViewer.Close();
+                }
+                _batchImageViewer = new ImageViewerForm(successfulOutputPaths, "Compression Results");
+                _batchImageViewer.Show();
+            }
+
+            // 5. Refresh UI
+            LoadImageFilesForCompression();
+            UpdateSelectionDisplay(checkedListBoxCompress, txtCompressSelection);
         }
 
+        // --- Batch Decompress Button Click ---
         private void decompressButton_Click(object sender, EventArgs e)
         {
             if (_dbManager == null) { ShowError("Database connection not initialized."); return; }
-            if (fileSelectionDecompression.SelectedItem == null) { ShowError("Please select a compressed file to decompress."); return; }
+            if (checkedListBoxDecompress.CheckedItems.Count == 0) { ShowError($"Please select at least one file (up to {MaxBatchSize}) to decompress."); return; }
 
-            // 1. Get Selected Compressed File Info
-            CompressionComboboxItem selectedCompressedFile = (CompressionComboboxItem)fileSelectionDecompression.SelectedItem;
-            int compressedRecordId = selectedCompressedFile.CompressedFileId; // ID from 'compressed_files' table link
-            int compressedFileId = selectedCompressedFile.FileId;       // ID from 'files' table (the compressed file itself)
+            string? outputFolder = null;
 
-            // 2. Get Original File Details (for saving correctly)
-            int? originalFileId = _dbManager.GetOriginalFileIdFromCompressed(compressedRecordId);
-            if (originalFileId == null) { ShowError("Critical error: Cannot find the link to the original file record for this compressed version."); return; }
-
-            string? originalFileType = _dbManager.GetFileType(originalFileId.Value);
-            string? originalFileName = _dbManager.GetFileName(originalFileId.Value);
-            if (string.IsNullOrEmpty(originalFileType) || string.IsNullOrEmpty(originalFileName))
+            // 1. Get Output Folder
+            using (var fbd = new FolderBrowserDialog { /* ... setup ... */ })
             {
-                ShowError("Critical error: Cannot retrieve original file details (name or type).");
-                return;
-            }
-
-            // 3. Get Compressed File Path and Validate Existence
-            string? compressedFilePath = _dbManager.GetFilePath(compressedFileId);
-             if (string.IsNullOrEmpty(compressedFilePath))
-            {
-                ShowError($"Compressed file path is missing for the selected file (ID: {compressedFileId}).");
-                LoadCompressedFilesForDecompression(); // Refresh list
-                return;
-            }
-            if (!File.Exists(compressedFilePath))
-            {
-                ShowError($"Compressed file not found on disk. Path: {compressedFilePath}");
-                LoadCompressedFilesForDecompression(); // Refresh list
-                return;
-            }
-
-            // 4. Prompt User to Save Decompressed File
-            using (SaveFileDialog sfd = new SaveFileDialog())
-            {
-                 sfd.Title = "Save Decompressed File";
-                 // Suggest original name + "_decompressed" + original extension
-                 sfd.FileName = Path.GetFileNameWithoutExtension(originalFileName) + "_decompressed" + originalFileType;
-                 string filterExt = originalFileType.TrimStart('.').ToUpperInvariant();
-                 sfd.Filter = $"{filterExt} Files (*{originalFileType})|*{originalFileType}|All Files (*.*)|*.*";
-                 sfd.DefaultExt = originalFileType.TrimStart('.');
-
-                if (sfd.ShowDialog() == DialogResult.OK)
+                fbd.Description = "Select Folder to Save Decompressed Files";
+                fbd.ShowNewFolderButton = true;
+                if (fbd.ShowDialog() != DialogResult.OK)
                 {
-                    string destinationFilePath = sfd.FileName;
+                    MessageBox.Show("Operation cancelled: No output folder selected.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                outputFolder = fbd.SelectedPath;
+            }
 
-                    try
+            // 2. Process Selected Files
+            int successCount = 0;
+            List<string> errors = new List<string>();
+            List<string> successfulOutputPaths = new List<string>(); // Collect paths for viewer
+            Cursor = Cursors.WaitCursor;
+            checkedListBoxDecompress.Visible = false; // Hide dropdown
+
+            foreach (object item in checkedListBoxDecompress.CheckedItems)
+            {
+                CompressionComboboxItem selectedCompressedFile = (CompressionComboboxItem)item;
+                int compressedRecordId = selectedCompressedFile.CompressedFileId;
+                int compressedFileId = selectedCompressedFile.FileId;
+                string compressedFileName = selectedCompressedFile.Text;
+                string destinationPath = null; // Store final path
+                string originalFileType = ""; // Store original type for viewer check
+
+                try
+                {
+                    // Get Original File Details
+                    int? originalFileId = _dbManager.GetOriginalFileIdFromCompressed(compressedRecordId);
+                    if (originalFileId == null) throw new Exception($"Cannot find original file link for {compressedFileName}.");
+                    originalFileType = _dbManager.GetFileType(originalFileId.Value);
+                    string? originalFileNameBase = _dbManager.GetFileName(originalFileId.Value);
+                    if (string.IsNullOrEmpty(originalFileType) || string.IsNullOrEmpty(originalFileNameBase)) throw new Exception($"Cannot retrieve original details for {compressedFileName}.");
+
+                    // Get Compressed File Path & Validate
+                    string? compressedFilePath = _dbManager.GetFilePath(compressedFileId);
+                    if (string.IsNullOrEmpty(compressedFilePath)) throw new FileNotFoundException($"Compressed path missing in DB for {compressedFileName} (ID: {compressedFileId}).");
+                    if (!File.Exists(compressedFilePath)) throw new FileNotFoundException($"Compressed file not found on disk: {compressedFilePath}");
+
+                    // Construct Output Path (with uniqueness check)
+                    string outputFileNameBase = Path.GetFileNameWithoutExtension(originalFileNameBase);
+                    string outputFileName = $"{outputFileNameBase}_decompressed{originalFileType}";
+                    destinationPath = Path.Combine(outputFolder, outputFileName);
+                    int counter = 1;
+                    while (File.Exists(destinationPath))
                     {
-                        // 5. Perform Decompression (Re-save)
-                        ImageCompressionService.DecompressImage(compressedFilePath, destinationFilePath);
-
-                        // 6. Add Record for the New Decompressed File
-                        _dbManager.InsertDerivedFileRecord(destinationFilePath);
-
-                        MessageBox.Show("File decompressed and saved successfully!", "Decompression Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        ShowImageInNewWindow(destinationFilePath, $"Decompressed: {Path.GetFileName(destinationFilePath)}");
-
-                        LoadCompressedFilesForDecompression(); // Refresh the source list
+                        outputFileName = $"{outputFileNameBase}_decompressed_{counter++}{originalFileType}";
+                        destinationPath = Path.Combine(outputFolder, outputFileName);
                     }
-                    catch (NotSupportedException ex)
+
+                    // Perform Decompression
+                    ImageCompressionService.DecompressImage(compressedFilePath, destinationPath);
+
+                    // Add DB Record
+                    _dbManager.InsertDerivedFileRecord(destinationPath); // Record the new decompressed file
+
+                    // Collect path for viewer only if the resulting type is viewable
+                    if (_supportedImageExtensions.Contains(originalFileType.ToLowerInvariant()))
                     {
-                         ShowError($"Decompression failed: {ex.Message}");
+                        successfulOutputPaths.Add(destinationPath); // ADD TO LIST
                     }
-                    catch (Exception ex) // Catch-all for file IO, DB errors etc.
+
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Failed to decompress '{compressedFileName}': {ex.Message}");
+                    if (destinationPath != null && File.Exists(destinationPath))
                     {
-                        ShowError($"Decompression failed: {ex.Message}");
-                        // Consider trying to delete the partially saved file if the DB insert fails
-                        if (File.Exists(destinationFilePath))
-                        {
-                             try { File.Delete(destinationFilePath); } catch { /* Ignore delete error */ }
-                        }
+                        try { File.Delete(destinationPath); } catch { /* Ignore delete error */ }
                     }
                 }
+            } // End foreach
+
+            Cursor = Cursors.Default;
+
+            // 3. Show Summary Feedback
+            StringBuilder summary = new StringBuilder();
+            summary.AppendLine($"Batch Decompression Complete.");
+            summary.AppendLine($"Successfully decompressed: {successCount} file(s).");
+            summary.AppendLine($"Failed: {errors.Count} file(s).");
+            if (errors.Count > 0)
+            {
+                summary.AppendLine("\nErrors:");
+                errors.ForEach(err => summary.AppendLine($"- {err}"));
+                MessageBox.Show(summary.ToString(), "Decompression Summary", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+            else
+            {
+                MessageBox.Show(summary.ToString(), "Decompression Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // 4. Launch Single Viewer
+            if (successfulOutputPaths.Any())
+            {
+                if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
+                {
+                    _batchImageViewer.Close();
+                }
+                _batchImageViewer = new ImageViewerForm(successfulOutputPaths, "Decompression Results");
+                _batchImageViewer.Show();
+            }
+
+            // 5. Refresh UI
+            LoadCompressedFilesForDecompression();
+            UpdateSelectionDisplay(checkedListBoxDecompress, txtDecompressSelection);
         }
 
         private void ShowError(string message)
@@ -1024,6 +1251,7 @@ namespace SafeGuard
             }
         }
 
+        // Keep this method if you still want single-image viewing from the grid double-click
         private void ShowImageInNewWindow(string imagePath, string title)
         {
             if (string.IsNullOrEmpty(imagePath)) return; // No path provided
@@ -1032,29 +1260,38 @@ namespace SafeGuard
             {
                 if (!File.Exists(imagePath))
                 {
-                    // Don't show error here, as the primary operation succeeded.
-                    // Just log it or silently fail to open viewer.
                     Console.WriteLine($"ImageViewer: File not found at {imagePath}");
                     return;
                 }
 
-                // Check for common, viewable image extensions
-                string[] supportedExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif" };
                 string extension = Path.GetExtension(imagePath).ToLowerInvariant();
 
-                if (!supportedExtensions.Contains(extension))
+                if (!_supportedImageExtensions.Contains(extension))
                 {
                     Console.WriteLine($"ImageViewer: File type '{extension}' not supported for viewing ({Path.GetFileName(imagePath)}).");
                     return; // Not a displayable image type
                 }
 
-                // Create and show the viewer form (modelessly)
-                ImageViewerForm viewer = new ImageViewerForm(imagePath, title);
-                viewer.Show(); // Use Show() to not block the main UI
+                // --- CHANGE HERE ---
+                // Create a list containing only the single path
+                List<string> singleImageList = new List<string> { imagePath };
+
+                // Close previous viewer if it exists (optional, maybe you want multiple single viewers?)
+                // If you want only one viewer EVER, manage the _batchImageViewer reference here too.
+                // For simplicity now, let's allow multiple single viewers from the grid.
+                if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
+                {
+                    // Decide: close the batch viewer if a single image is opened?
+                    // _batchImageViewer.Close();
+                }
+
+                // Call the constructor with the LIST
+                ImageViewerForm viewer = new ImageViewerForm(singleImageList, title);
+                viewer.Show();
+                // --- END CHANGE ---
             }
             catch (Exception ex)
             {
-                // Show an error specific to the viewer failing, but don't interrupt main flow.
                 MessageBox.Show($"Could not open image viewer for '{Path.GetFileName(imagePath)}'.\nReason: {ex.Message}",
                                 "Image Viewer Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }

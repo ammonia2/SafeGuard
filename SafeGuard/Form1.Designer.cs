@@ -60,7 +60,7 @@ namespace SafeGuard
             panelEncryptionSettings = new Panel();
             encryptButton = new Button();
             label8 = new Label();
-            fileSelectionEncryption = new ComboBox();
+            //fileSelectionEncryption = new ComboBox();
             encryptionKeyBox = new TextBox();
             label7 = new Label();
             label = new Label();
@@ -70,7 +70,7 @@ namespace SafeGuard
             decryptionPanel = new Panel();
             decryptButton = new Button();
             label6 = new Label();
-            decryptionFileSelection = new ComboBox();
+            //decryptionFileSelection = new ComboBox();
             decryptionKey = new TextBox();
             label9 = new Label();
             label10 = new Label();
@@ -79,18 +79,32 @@ namespace SafeGuard
             label12 = new Label();
             compressionPanel = new Panel();
             compressButton = new Button();
-            fileSelectionCompression = new ComboBox();
+            //fileSelectionCompression = new ComboBox();
             compressionFileLabel = new Label();
             compressionDescLabel = new Label();
             compressionTitleLabel = new Label();
             decompressionPanel = new Panel();
             decompressButton = new Button();
-            fileSelectionDecompression = new ComboBox();
+            //fileSelectionDecompression = new ComboBox();
             decompressionFileLabel = new Label();
             decompressionDescLabel = new Label();
             decompressionTitleLabel = new Label();
             lblDropPasteHint = new Label();
             panelDropPasteTarget = new Panel();
+
+            checkedListBoxEncrypt = new CheckedListBox();
+            checkedListBoxDecrypt = new CheckedListBox();
+            checkedListBoxCompress = new CheckedListBox();
+            checkedListBoxDecompress = new CheckedListBox();
+            txtEncryptSelection = new TextBox();
+            btnEncryptDropdown = new Button();
+            txtDecryptSelection = new TextBox();
+            btnDecryptDropdown = new Button();
+            txtCompressSelection = new TextBox();
+            btnCompressDropdown = new Button();
+            txtDecompressSelection = new TextBox();
+            btnDecompressDropdown = new Button();
+
             panelHeader.SuspendLayout();
             panelContent.SuspendLayout();
             panelFileManagement.SuspendLayout();
@@ -100,6 +114,7 @@ namespace SafeGuard
             compressionPanel.SuspendLayout();
             decompressionPanel.SuspendLayout();
             SuspendLayout();
+
             // 
             // panelHeader
             // 
@@ -118,7 +133,8 @@ namespace SafeGuard
             panelHeader.Name = "panelHeader";
             panelHeader.Size = new Size(986, 62);
             panelHeader.TabIndex = 0;
-            // 
+            //
+            //
             // linkLabel6
             // 
             linkLabel6.AutoSize = true;
@@ -403,7 +419,12 @@ namespace SafeGuard
             label14.Text = "File Management";
             // 
             // panelEncryptionSettings
-            // 
+            //
+            panelEncryptionSettings.Controls.Add(this.txtEncryptSelection);      // ADD TextBox
+            panelEncryptionSettings.Controls.Add(this.btnEncryptDropdown);       // ADD Button
+
+            panelEncryptionSettings.Controls.Add(this.checkedListBoxEncrypt);
+
             panelEncryptionSettings.BorderStyle = BorderStyle.Fixed3D;
             panelEncryptionSettings.Controls.Add(encryptButton);
             panelEncryptionSettings.Controls.Add(label8);
@@ -421,7 +442,41 @@ namespace SafeGuard
             panelEncryptionSettings.Size = new Size(986, 647);
             panelEncryptionSettings.TabIndex = 5;
             panelEncryptionSettings.Visible = false;
-            // 
+            //
+            // txtEncryptSelection (Where the ComboBox/Old ListBox was)
+            //
+            txtEncryptSelection.Location = new Point(207, 312); // Original position
+            txtEncryptSelection.Name = "txtEncryptSelection";
+            txtEncryptSelection.ReadOnly = true; // Display only
+            txtEncryptSelection.Size = new Size(120, 27); // Adjust width (leave space for button)
+            txtEncryptSelection.TabIndex = 7; // Original TabIndex
+            txtEncryptSelection.Text = "No selection"; // Initial text
+            txtEncryptSelection.TabStop = false; // Don't tab into read-only text
+            //
+            //
+            // btnEncryptDropdown (Next to the TextBox)
+            //
+            btnEncryptDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnEncryptDropdown.Location = new Point(329, 311); // Position next to textbox (adjust X)
+            btnEncryptDropdown.Name = "btnEncryptDropdown";
+            btnEncryptDropdown.Size = new Size(30, 29); // Small button size
+            btnEncryptDropdown.TabIndex = 10; // New TabIndex
+            btnEncryptDropdown.Text = "▼"; // Down arrow symbol
+            btnEncryptDropdown.UseVisualStyleBackColor = true;
+            btnEncryptDropdown.Click += new EventHandler(this.btnDropdown_Click);
+            //
+            // checkedListBoxEncrypt (Position BELOW TextBox/Button, initially hidden)
+            //
+            checkedListBoxEncrypt.CheckOnClick = true;
+            checkedListBoxEncrypt.FormattingEnabled = true;
+            checkedListBoxEncrypt.Location = new Point(207, 342); // Position BELOW the textbox
+            checkedListBoxEncrypt.Name = "checkedListBoxEncrypt";
+            checkedListBoxEncrypt.Size = new Size(152, 90); // Adjust size as needed for dropdown items
+            checkedListBoxEncrypt.TabIndex = 11; // New TabIndex
+            checkedListBoxEncrypt.Visible = false; // <<< INITIALLY HIDDEN
+            checkedListBoxEncrypt.ItemCheck += new ItemCheckEventHandler(this.checkedListBox_ItemCheck); // Keep selection limit handler
+            checkedListBoxEncrypt.Leave += new EventHandler(this.checkedListBox_Leave); // Add Leave handler
+            //
             // encryptButton
             // 
             encryptButton.BackColor = SystemColors.ActiveCaptionText;
@@ -448,13 +503,13 @@ namespace SafeGuard
             // 
             // fileSelectionEncryption
             // 
-            fileSelectionEncryption.DropDownStyle = ComboBoxStyle.DropDownList;
-            fileSelectionEncryption.FormattingEnabled = true;
-            fileSelectionEncryption.Location = new Point(207, 312);
-            fileSelectionEncryption.Margin = new Padding(3, 4, 3, 4);
-            fileSelectionEncryption.Name = "fileSelectionEncryption";
-            fileSelectionEncryption.Size = new Size(138, 28);
-            fileSelectionEncryption.TabIndex = 7;
+            //fileSelectionEncryption.DropDownStyle = ComboBoxStyle.DropDownList;
+            //fileSelectionEncryption.FormattingEnabled = true;
+            //fileSelectionEncryption.Location = new Point(207, 312);
+           // fileSelectionEncryption.Margin = new Padding(3, 4, 3, 4);
+            //fileSelectionEncryption.Name = "fileSelectionEncryption";
+           // fileSelectionEncryption.Size = new Size(138, 28);
+            //fileSelectionEncryption.TabIndex = 7;
             // 
             // encryptionKeyBox
             // 
@@ -517,6 +572,10 @@ namespace SafeGuard
             // 
             // decryptionPanel
             // 
+            decryptionPanel.Controls.Add(this.txtDecryptSelection);
+            decryptionPanel.Controls.Add(this.btnDecryptDropdown);
+            decryptionPanel.Controls.Add(this.checkedListBoxDecrypt); // ADD
+
             decryptionPanel.BorderStyle = BorderStyle.Fixed3D;
             decryptionPanel.Controls.Add(decryptButton);
             decryptionPanel.Controls.Add(label6);
@@ -534,6 +593,33 @@ namespace SafeGuard
             decryptionPanel.Size = new Size(986, 647);
             decryptionPanel.TabIndex = 6;
             decryptionPanel.Visible = false;
+            // txtDecryptSelection setup... (Location: 207, 312 etc.)
+            txtDecryptSelection.Location = new Point(207, 312);
+            txtDecryptSelection.Name = "txtDecryptSelection";
+            txtDecryptSelection.ReadOnly = true;
+            txtDecryptSelection.Size = new Size(120, 27);
+            txtDecryptSelection.TabIndex = 7;
+            txtDecryptSelection.Text = "No selection";
+            txtDecryptSelection.TabStop = false;
+            // btnDecryptDropdown setup... (Location: 329, 311 etc.)
+            btnDecryptDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnDecryptDropdown.Location = new Point(329, 311);
+            btnDecryptDropdown.Name = "btnDecryptDropdown";
+            btnDecryptDropdown.Size = new Size(30, 29);
+            btnDecryptDropdown.TabIndex = 10;
+            btnDecryptDropdown.Text = "▼";
+            btnDecryptDropdown.UseVisualStyleBackColor = true;
+            btnDecryptDropdown.Click += new EventHandler(this.btnDropdown_Click); // SHARED
+                                                                                  // checkedListBoxDecrypt setup... (Location: 207, 342 etc., Visible: false)
+            checkedListBoxDecrypt.CheckOnClick = true;
+            checkedListBoxDecrypt.FormattingEnabled = true;
+            checkedListBoxDecrypt.Location = new Point(207, 342);
+            checkedListBoxDecrypt.Name = "checkedListBoxDecrypt";
+            checkedListBoxDecrypt.Size = new Size(152, 90);
+            checkedListBoxDecrypt.TabIndex = 11;
+            checkedListBoxDecrypt.Visible = false; // Initially hidden
+            checkedListBoxDecrypt.ItemCheck += new ItemCheckEventHandler(this.checkedListBox_ItemCheck); // Keep limit handler
+            checkedListBoxDecrypt.Leave += new EventHandler(this.checkedListBox_Leave); // Add Leave handler
             // 
             // decryptButton
             // 
@@ -561,14 +647,14 @@ namespace SafeGuard
             // 
             // decryptionFileSelection
             // 
-            decryptionFileSelection.DropDownStyle = ComboBoxStyle.DropDownList;
-            decryptionFileSelection.FormattingEnabled = true;
-            decryptionFileSelection.Location = new Point(207, 312);
-            decryptionFileSelection.Margin = new Padding(3, 4, 3, 4);
-            decryptionFileSelection.Name = "decryptionFileSelection";
-            decryptionFileSelection.Size = new Size(138, 28);
-            decryptionFileSelection.TabIndex = 7;
-            // 
+            //decryptionFileSelection.DropDownStyle = ComboBoxStyle.DropDownList;
+            //decryptionFileSelection.FormattingEnabled = true;
+            //decryptionFileSelection.Location = new Point(207, 312);
+            //decryptionFileSelection.Margin = new Padding(3, 4, 3, 4);
+            //decryptionFileSelection.Name = "decryptionFileSelection";
+            //decryptionFileSelection.Size = new Size(138, 28);
+            //decryptionFileSelection.TabIndex = 7;
+            //// 
             // decryptionKey
             // 
             decryptionKey.Location = new Point(655, 311);
@@ -628,7 +714,11 @@ namespace SafeGuard
             label12.Text = "File Decryption";
             // 
             // compressionPanel
-            // 
+            //
+            compressionPanel.Controls.Add(this.txtCompressSelection);
+            compressionPanel.Controls.Add(this.btnCompressDropdown);
+            compressionPanel.Controls.Add(this.checkedListBoxCompress); // ADD
+
             compressionPanel.BorderStyle = BorderStyle.Fixed3D;
             compressionPanel.Controls.Add(compressButton);
             compressionPanel.Controls.Add(fileSelectionCompression);
@@ -642,7 +732,34 @@ namespace SafeGuard
             compressionPanel.Size = new Size(986, 647);
             compressionPanel.TabIndex = 8;
             compressionPanel.Visible = false;
-            // 
+            // txtCompressSelection setup... (Location: 425, 312 etc.)
+            txtCompressSelection.Location = new Point(425, 312);
+            txtCompressSelection.Name = "txtCompressSelection";
+            txtCompressSelection.ReadOnly = true;
+            txtCompressSelection.Size = new Size(120, 27); // Adjust size as needed
+            txtCompressSelection.TabIndex = 3; // Original TabIndex
+            txtCompressSelection.Text = "No selection";
+            txtCompressSelection.TabStop = false;
+            // btnCompressDropdown setup... (Location: 547, 311 etc.)
+            btnCompressDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnCompressDropdown.Location = new Point(547, 311); // Position next to textbox
+            btnCompressDropdown.Name = "btnCompressDropdown";
+            btnCompressDropdown.Size = new Size(30, 29);
+            btnCompressDropdown.TabIndex = 5; // Adjust TabIndex
+            btnCompressDropdown.Text = "▼";
+            btnCompressDropdown.UseVisualStyleBackColor = true;
+            btnCompressDropdown.Click += new EventHandler(this.btnDropdown_Click); // SHARED
+                                                                                   // checkedListBoxCompress setup... (Location: 425, 342 etc., Visible: false)
+            checkedListBoxCompress.CheckOnClick = true;
+            checkedListBoxCompress.FormattingEnabled = true;
+            checkedListBoxCompress.Location = new Point(425, 342); // Position BELOW the textbox
+            checkedListBoxCompress.Name = "checkedListBoxCompress";
+            checkedListBoxCompress.Size = new Size(152, 90); // Adjust size
+            checkedListBoxCompress.TabIndex = 6; // Adjust TabIndex
+            checkedListBoxCompress.Visible = false; // Initially hidden
+            checkedListBoxCompress.ItemCheck += new ItemCheckEventHandler(this.checkedListBox_ItemCheck); // Keep limit handler
+            checkedListBoxCompress.Leave += new EventHandler(this.checkedListBox_Leave); // Add Leave handler
+            //
             // compressButton
             // 
             compressButton.BackColor = SystemColors.ActiveCaptionText;
@@ -658,12 +775,12 @@ namespace SafeGuard
             // 
             // fileSelectionCompression
             // 
-            fileSelectionCompression.DropDownStyle = ComboBoxStyle.DropDownList;
-            fileSelectionCompression.FormattingEnabled = true;
-            fileSelectionCompression.Location = new Point(425, 312);
-            fileSelectionCompression.Name = "fileSelectionCompression";
-            fileSelectionCompression.Size = new Size(150, 28);
-            fileSelectionCompression.TabIndex = 3;
+            //fileSelectionCompression.DropDownStyle = ComboBoxStyle.DropDownList;
+            //fileSelectionCompression.FormattingEnabled = true;
+            //fileSelectionCompression.Location = new Point(425, 312);
+            //fileSelectionCompression.Name = "fileSelectionCompression";
+            //fileSelectionCompression.Size = new Size(150, 28);
+            //fileSelectionCompression.TabIndex = 3;
             // 
             // compressionFileLabel
             // 
@@ -696,7 +813,11 @@ namespace SafeGuard
             compressionTitleLabel.Text = "File Compression";
             // 
             // decompressionPanel
-            // 
+            //
+            decompressionPanel.Controls.Add(this.txtDecompressSelection);
+            decompressionPanel.Controls.Add(this.btnDecompressDropdown);
+            decompressionPanel.Controls.Add(this.checkedListBoxDecompress); // ADD
+
             decompressionPanel.BorderStyle = BorderStyle.Fixed3D;
             decompressionPanel.Controls.Add(decompressButton);
             decompressionPanel.Controls.Add(fileSelectionDecompression);
@@ -710,7 +831,34 @@ namespace SafeGuard
             decompressionPanel.Size = new Size(986, 647);
             decompressionPanel.TabIndex = 9;
             decompressionPanel.Visible = false;
-            // 
+            // txtDecompressSelection setup... (Location: 425, 312 etc.)
+            txtDecompressSelection.Location = new Point(425, 312);
+            txtDecompressSelection.Name = "txtDecompressSelection";
+            txtDecompressSelection.ReadOnly = true;
+            txtDecompressSelection.Size = new Size(120, 27); // Adjust size as needed
+            txtDecompressSelection.TabIndex = 3; // Original TabIndex
+            txtDecompressSelection.Text = "No selection";
+            txtDecompressSelection.TabStop = false;
+            // btnDecompressDropdown setup... (Location: 547, 311 etc.)
+            btnDecompressDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnDecompressDropdown.Location = new Point(547, 311); // Position next to textbox
+            btnDecompressDropdown.Name = "btnDecompressDropdown";
+            btnDecompressDropdown.Size = new Size(30, 29);
+            btnDecompressDropdown.TabIndex = 5; // Adjust TabIndex
+            btnDecompressDropdown.Text = "▼";
+            btnDecompressDropdown.UseVisualStyleBackColor = true;
+            btnDecompressDropdown.Click += new EventHandler(this.btnDropdown_Click); // SHARED
+            // checkedListBoxDecompress setup... (Location: 425, 342 etc., Visible: false)
+            checkedListBoxDecompress.CheckOnClick = true;
+            checkedListBoxDecompress.FormattingEnabled = true;
+            checkedListBoxDecompress.Location = new Point(425, 342); // Position BELOW the textbox
+            checkedListBoxDecompress.Name = "checkedListBoxDecompress";
+            checkedListBoxDecompress.Size = new Size(152, 90); // Adjust size
+            checkedListBoxDecompress.TabIndex = 6; // Adjust TabIndex
+            checkedListBoxDecompress.Visible = false; // Initially hidden
+            checkedListBoxDecompress.ItemCheck += new ItemCheckEventHandler(this.checkedListBox_ItemCheck); // Keep limit handler
+            checkedListBoxDecompress.Leave += new EventHandler(this.checkedListBox_Leave); // Add Leave handler
+            //
             // decompressButton
             // 
             decompressButton.BackColor = SystemColors.ActiveCaptionText;
@@ -726,12 +874,12 @@ namespace SafeGuard
             // 
             // fileSelectionDecompression
             // 
-            fileSelectionDecompression.DropDownStyle = ComboBoxStyle.DropDownList;
-            fileSelectionDecompression.FormattingEnabled = true;
-            fileSelectionDecompression.Location = new Point(425, 312);
-            fileSelectionDecompression.Name = "fileSelectionDecompression";
-            fileSelectionDecompression.Size = new Size(150, 28);
-            fileSelectionDecompression.TabIndex = 3;
+            //fileSelectionDecompression.DropDownStyle = ComboBoxStyle.DropDownList;
+            //fileSelectionDecompression.FormattingEnabled = true;
+            //fileSelectionDecompression.Location = new Point(425, 312);
+            //fileSelectionDecompression.Name = "fileSelectionDecompression";
+            //fileSelectionDecompression.Size = new Size(150, 28);
+            //fileSelectionDecompression.TabIndex = 3;
             // 
             // decompressionFileLabel
             // 
@@ -855,6 +1003,20 @@ namespace SafeGuard
         private Label decompressionFileLabel;
         private ComboBox fileSelectionDecompression;
         private Button decompressButton;
+        //batch
+        private CheckedListBox checkedListBoxEncrypt;
+        private CheckedListBox checkedListBoxDecrypt;
+        private CheckedListBox checkedListBoxCompress;
+        private CheckedListBox checkedListBoxDecompress;
+        private TextBox txtEncryptSelection;
+        private Button btnEncryptDropdown;
+        private TextBox txtDecryptSelection;
+        private Button btnDecryptDropdown;
+        private TextBox txtCompressSelection;
+        private Button btnCompressDropdown;
+        private TextBox txtDecompressSelection;
+        private Button btnDecompressDropdown;
+
     }
 }
 // --- END OF UPDATED Form1.Designer.cs ---

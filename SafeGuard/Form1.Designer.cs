@@ -256,8 +256,8 @@ namespace SafeGuard
             // panelContent
             // 
             panelContent.BackColor = Color.FromArgb(45, 45, 48);
-            panelContent.Controls.Add(panelDropPasteTarget);
             panelContent.Controls.Add(viewAllFilesButton);
+            panelContent.Controls.Add(panelDropPasteTarget);
             panelContent.Controls.Add(label13);
             panelContent.Controls.Add(flowLayoutPanelRecentFiles);
             panelContent.Controls.Add(label3);
@@ -329,7 +329,7 @@ namespace SafeGuard
             flowLayoutPanelRecentFiles.AutoScroll = true;
             flowLayoutPanelRecentFiles.BackColor = Color.FromArgb(45, 45, 48);
             flowLayoutPanelRecentFiles.ForeColor = Color.White;
-            flowLayoutPanelRecentFiles.Location = new Point(144, 335);
+            flowLayoutPanelRecentFiles.Location = new Point(142, 361);
             flowLayoutPanelRecentFiles.Name = "flowLayoutPanelRecentFiles";
             flowLayoutPanelRecentFiles.Size = new Size(422, 130);
             flowLayoutPanelRecentFiles.TabIndex = 4;
@@ -339,7 +339,7 @@ namespace SafeGuard
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label3.ForeColor = Color.White;
-            label3.Location = new Point(301, 304);
+            label3.Location = new Point(301, 321);
             label3.Name = "label3";
             label3.Size = new Size(125, 28);
             label3.TabIndex = 3;

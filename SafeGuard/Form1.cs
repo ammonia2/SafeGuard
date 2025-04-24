@@ -451,7 +451,7 @@ namespace SafeGuard
         {
             Panel filePanel = new Panel
             {
-                BackColor = Color.LightBlue,
+                BackColor = Color.Gray,
                 Margin = new Padding(5),
                 Padding = new Padding(5),
                 Size = new Size(130, 70),

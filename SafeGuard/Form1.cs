@@ -8,10 +8,11 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging; // Needed for ImageFormat
 using System.IO; // Needed for Path, File, Directory
-using System.Linq; // Needed for Linq extension methods like Contains
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text; // Needed for StringBuilder
 using System.Windows.Forms;
+using System.Threading.Tasks;
 
 namespace SafeGuard
 {
@@ -60,6 +61,66 @@ namespace SafeGuard
             panelFileManagement.Visible = false;
             compressionPanel.Visible = false;
             decompressionPanel.Visible = false;
+            panelRemoveFiles.Visible = false;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Perform initialization AFTER the form and its controls are created,
+            // but before it's shown to the user.
+
+            // 1. Perform Database Cleanup (if DB is available)
+            if (_dbManager != null && !string.IsNullOrEmpty(_connectionString) && !_connectionString.StartsWith("Server=none;"))
+            {
+                try
+                {
+                    Console.WriteLine("Starting database cleanup check...");
+                    int cleanedCount = _dbManager.CleanupMissingFiles();
+                    if (cleanedCount > 0)
+                    {
+                        Console.WriteLine($"Database cleanup removed {cleanedCount} records for missing files.");
+                        // Optional: Inform user if many files were removed, but typically this can be silent.
+                        // MessageBox.Show($"{cleanedCount} records for missing files were removed from the database.", "Database Cleanup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else if (cleanedCount < 0)
+                    {
+                        Console.WriteLine("An error occurred during database cleanup.");
+                        // Optional: Notify user of cleanup error
+                        // MessageBox.Show("An error occurred while cleaning up database records.", "Cleanup Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Database cleanup check complete. No missing file records found or removed.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Catch any unexpected errors from the cleanup method itself
+                    Console.WriteLine($"Error during startup file cleanup: {ex.Message}");
+                    ShowError($"An error occurred during the startup file cleanup process:\n{ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Skipping database cleanup check - Database connection not available.");
+            }
+
+            // 2. Load Initial UI Data (Now happens AFTER cleanup)
+            SetupComboBoxes(); // Setup static items first
+            LoadRecentFiles(); // Load dynamic data
+
+            // Load initial state for file management if needed
+            if (cmbTables.Items.Count > 0 && cmbTables.SelectedIndex < 0)
+            {
+                cmbTables.SelectedIndex = 0; // Default to "All Files"
+            }
+            else
+            {
+                LoadAllFilesToGrid(); // Load grid if selection is already valid
+            }
+            // Ensure other panels load their initial data if necessary (e.g., dropdowns)
+            // You might want to call the Load... methods for the other panels here too,
+            // or ensure they are called when the respective link label is clicked (which they are).
         }
 
         private readonly HashSet<string> _supportedImageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -192,26 +253,35 @@ namespace SafeGuard
         }
 
         // SHARED Click handler for ALL dropdown buttons
+        // SHARED Click handler for ALL dropdown buttons
         private void btnDropdown_Click(object sender, EventArgs e)
         {
             Button btn = sender as Button;
             CheckedListBox clb = null;
+
+            if (btn == null) return; // Safety check
 
             // Determine which CheckedListBox to toggle based on the button clicked
             if (btn == btnEncryptDropdown) clb = checkedListBoxEncrypt;
             else if (btn == btnDecryptDropdown) clb = checkedListBoxDecrypt;
             else if (btn == btnCompressDropdown) clb = checkedListBoxCompress;
             else if (btn == btnDecompressDropdown) clb = checkedListBoxDecompress;
+            else if (btn == dropdownRemoveSelector) clb = checkedListBoxRemove; // <<<--- ADD THIS LINE
 
+            // If we found a matching CheckedListBox, toggle its visibility
             if (clb != null)
             {
                 clb.Visible = !clb.Visible; // Toggle visibility
                 if (clb.Visible)
                 {
                     clb.BringToFront(); // Ensure it's drawn on top
-                    // Optional: Give focus to the list when opened
-                    clb.Focus();
+                    clb.Focus();        // Give focus to the list when opened
                 }
+            }
+            else
+            {
+                // Optional: Log if a button was clicked but not mapped
+                Console.WriteLine($"Warning: btnDropdown_Click triggered by unmapped button: {btn.Name}");
             }
         }
 
@@ -488,23 +558,6 @@ namespace SafeGuard
             return value.Length <= maxLength ? value : value.Substring(0, maxLength) + "...";
         }
 
-        private void LoadComboBoxData(ComboBox comboBox, Func<List<object>> dataSourceFunc)
-        {
-            if (_dbManager == null) return;
-            comboBox.Items.Clear();
-            try
-            {
-                var items = dataSourceFunc();
-                foreach (var item in items)
-                {
-                    comboBox.Items.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowError($"Error loading data for {comboBox.Name}: {ex.Message}");
-            }
-        }
 
         private void LoadCheckedListBoxData(CheckedListBox clb, Func<List<object>> dataSourceFunc)
         {
@@ -529,19 +582,47 @@ namespace SafeGuard
         private void LoadEncryptedFilesForDecryption() => LoadCheckedListBoxData(checkedListBoxDecrypt, () => _dbManager.GetEncryptedFilesForComboBox().ConvertAll(x => (object)x));
         private void LoadImageFilesForCompression() => LoadCheckedListBoxData(checkedListBoxCompress, () => _dbManager.GetImageFilesForComboBox().ConvertAll(x => (object)x));
         private void LoadCompressedFilesForDecompression() => LoadCheckedListBoxData(checkedListBoxDecompress, () => _dbManager.GetCompressedFilesForComboBox().ConvertAll(x => (object)x));
+        // Modify this method in Form1.cs
+
         private void ShowPanel(Panel panelToShow)
         {
+            // Hide all panels first
             panelContent.Visible = false;
             panelEncryptionSettings.Visible = false;
             decryptionPanel.Visible = false;
             panelFileManagement.Visible = false;
             compressionPanel.Visible = false;
             decompressionPanel.Visible = false;
+            panelRemoveFiles.Visible = false; // Add this line to ensure it's hidden when switching away
 
+            // Show the requested panel AND load its specific data
             if (panelToShow != null)
             {
                 panelToShow.Visible = true;
                 panelToShow.BringToFront();
+
+                // --- Load data specific to the panel being shown ---
+                if (panelToShow == panelEncryptionSettings) LoadImageFilesForEncryption();
+                else if (panelToShow == decryptionPanel) LoadEncryptedFilesForDecryption();
+                else if (panelToShow == compressionPanel) LoadImageFilesForCompression();
+                else if (panelToShow == decompressionPanel) LoadCompressedFilesForDecompression();
+                else if (panelToShow == panelFileManagement)
+                {
+                     // Ensure default selection if needed before loading grid
+                     if (cmbTables.Items.Count > 0 && cmbTables.SelectedIndex < 0)
+                         cmbTables.SelectedIndex = 0;
+                     LoadAllFilesToGrid();
+                }
+                // --- ADD THIS ELSE IF CONDITION ---
+                else if (panelToShow == panelRemoveFiles)
+                {
+                    LoadFilesForRemoval(); // Load data when this panel becomes active
+                }
+                // --- END ADDITION ---
+                else if (panelToShow == panelContent)
+                {
+                    LoadRecentFiles(); // Optionally reload recent files when going home
+                }
             }
         }
 
@@ -618,14 +699,122 @@ namespace SafeGuard
             linkLabel4_LinkClicked(sender, null);
         }
 
+        private void linkRemoveFiles_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            ShowPanel(panelRemoveFiles);
+        }
+
+        private void LoadFilesForRemoval()
+        {
+             if (_dbManager == null) return;
+             checkedListBoxRemove.Items.Clear(); // Clear existing items
+             txtRemoveSelect.Text = "No selection"; // <<<--- ADD THIS LINE to reset display text
+             try
+             {
+                 // Use the new DB manager method
+                 List<ComboboxItem> allFiles = _dbManager.GetAllFilesForComboBox();
+                 foreach (var item in allFiles)
+                 {
+                     // Add the ComboboxItem directly. Its ToString() override handles display.
+                     checkedListBoxRemove.Items.Add(item);
+                 }
+                 Console.WriteLine($"Loaded {allFiles.Count} files into removal list.");
+             }
+             catch (Exception ex)
+             {
+                 ShowError($"Error loading files for removal: {ex.Message}");
+                 Console.WriteLine($"Error in LoadFilesForRemoval: {ex.ToString()}");
+             }
+        }
+
+        private void btnDeleteSelectedFiles_Click(object sender, EventArgs e)
+        {
+            if (_dbManager == null)
+            {
+                ShowError("Database connection not available.");
+                return;
+            }
+
+            if (checkedListBoxRemove.CheckedItems.Count == 0)
+            {
+                MessageBox.Show("Please select at least one file entry to remove.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // --- Confirmation ---
+            int count = checkedListBoxRemove.CheckedItems.Count;
+            DialogResult confirmation = MessageBox.Show(
+                $"Are you sure you want to permanently remove the database entries for the {count} selected file(s)?\n\n" +
+                "This action cannot be undone and will also remove associated encryption/compression records.\n" +
+                "(This does NOT delete the actual files from your computer, only the database records).",
+                "Confirm Deletion",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirmation == DialogResult.Yes)
+            {
+                // --- Proceed with Deletion ---
+                List<int> idsToDelete = new List<int>();
+                foreach (object item in checkedListBoxRemove.CheckedItems)
+                {
+                    if (item is ComboboxItem cbItem && cbItem.Value is int fileId)
+                    {
+                        idsToDelete.Add(fileId);
+                    }
+                    else
+                    {
+                         Console.WriteLine($"Warning: Skipping invalid item type in checkedListBoxRemove: {item?.GetType().Name ?? "null"}");
+                    }
+                }
+
+                 if (idsToDelete.Count == 0) {
+                    ShowError("Could not identify valid file IDs from selection.");
+                    return;
+                 }
+
+
+                try
+                {
+                    Cursor = Cursors.WaitCursor; // Show wait cursor
+                    int deletedCount = _dbManager.DeleteFilesByIds(idsToDelete);
+                    Cursor = Cursors.Default; // Restore cursor
+
+                    MessageBox.Show($"Successfully removed {deletedCount} file entr(y/ies) from the database.", "Deletion Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Refresh the list after deletion
+                    LoadFilesForRemoval();
+                }
+                catch (Exception ex)
+                {
+                    Cursor = Cursors.Default;
+                    ShowError($"An error occurred while removing file entries:\n{ex.Message}");
+                    Console.WriteLine($"Error during btnDeleteSelectedFiles_Click: {ex.ToString()}");
+                    // Optionally, refresh the list anyway to see what might still be left
+                    LoadFilesForRemoval();
+                }
+            }
+            else
+            {
+                // User clicked No
+                MessageBox.Show("Deletion cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+                // --- MODIFY THIS EXISTING SHARED HANDLER ---
         private void checkedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
         {
             CheckedListBox clb = sender as CheckedListBox;
             if (clb == null) return;
 
-            // --- Selection Limit Logic (Keep as is) ---
+            // --- Selection Limit Logic (Keep as is or adjust MaxBatchSize if needed for removal) ---
+            // Consider if MaxBatchSize applies meaningfully to the removal panel.
+            // You might want to skip this limit check specifically for checkedListBoxRemove,
+            // or use a different limit. For now, it applies the same limit.
             if (e.NewValue == CheckState.Checked)
             {
+                // Example: Skip limit for removal list
+                // if (clb != checkedListBoxRemove && clb.CheckedItems.Count >= MaxBatchSize)
+                // Or apply the limit universally as below:
                 if (clb.CheckedItems.Count >= MaxBatchSize)
                 {
                     e.NewValue = CheckState.Unchecked;
@@ -639,30 +828,36 @@ namespace SafeGuard
                 }
                 else
                 {
-                    _limitMessageShown = false;
+                    _limitMessageShown = false; // Reset flag if check passes
                 }
             }
-            else
+            else // When unchecking
             {
-                _limitMessageShown = false;
+                _limitMessageShown = false; // Reset flag
             }
             // --- End Selection Limit Logic ---
 
 
             // --- Schedule UI Update ---
-            // Use BeginInvoke because ItemCheck fires *before* the CheckedItems collection updates.
-            // This ensures the count/text is correct when UpdateSelectionDisplay runs.
             this.BeginInvoke((MethodInvoker)delegate
             {
                 TextBox txt = null;
+                // Determine the correct TextBox based on the CheckedListBox that triggered the event
                 if (clb == checkedListBoxEncrypt) txt = txtEncryptSelection;
                 else if (clb == checkedListBoxDecrypt) txt = txtDecryptSelection;
                 else if (clb == checkedListBoxCompress) txt = txtCompressSelection;
                 else if (clb == checkedListBoxDecompress) txt = txtDecompressSelection;
+                else if (clb == checkedListBoxRemove) txt = txtRemoveSelect; // <<< --- ADD THIS LINE
 
+                // Update the display if a corresponding TextBox was found
                 if (txt != null)
                 {
                     UpdateSelectionDisplay(clb, txt);
+                }
+                else
+                {
+                    // Optional: Log if a CheckedListBox triggered this but wasn't mapped
+                    Console.WriteLine($"Warning: checkedListBox_ItemCheck triggered by unmapped control: {clb.Name}");
                 }
             });
             // --- End Schedule UI Update ---
@@ -671,29 +866,22 @@ namespace SafeGuard
         private void checkedListBox_Leave(object sender, EventArgs e)
         {
             CheckedListBox clb = sender as CheckedListBox;
-            if (clb != null)
+            if (clb == null) return;
+
+            Control focusedControl = this.ActiveControl; // Get the control that currently has focus
+            bool focusMovedToDropdownButton = false;
+
+            // Check if focus is moving to the *corresponding* dropdown button for the list that lost focus
+            if (clb == checkedListBoxEncrypt && focusedControl == btnEncryptDropdown) focusMovedToDropdownButton = true;
+            else if (clb == checkedListBoxDecrypt && focusedControl == btnDecryptDropdown) focusMovedToDropdownButton = true;
+            else if (clb == checkedListBoxCompress && focusedControl == btnCompressDropdown) focusMovedToDropdownButton = true;
+            else if (clb == checkedListBoxDecompress && focusedControl == btnDecompressDropdown) focusMovedToDropdownButton = true;
+            else if (clb == checkedListBoxRemove && focusedControl == dropdownRemoveSelector) focusMovedToDropdownButton = true; // <<<--- ADD THIS LINE
+
+            // Hide the list ONLY if focus did not move to its associated dropdown button
+            if (!focusMovedToDropdownButton)
             {
-                // Check if focus is moving to the corresponding dropdown button.
-                // If so, don't hide the list immediately, let the button click handle it.
-                Control focusedControl = this.ActiveControl; // Check which control has focus now
-                bool focusMovedToDropdownButton =
-                    (clb == checkedListBoxEncrypt && focusedControl == btnEncryptDropdown) ||
-                    (clb == checkedListBoxDecrypt && focusedControl == btnDecryptDropdown) ||
-                    (clb == checkedListBoxCompress && focusedControl == btnCompressDropdown) ||
-                    (clb == checkedListBoxDecompress && focusedControl == btnDecompressDropdown);
-
-                if (!focusMovedToDropdownButton)
-                {
-                    clb.Visible = false; // Hide the list when focus moves away
-
-                    // Optional: Update display one last time on leave, though BeginInvoke in ItemCheck is usually sufficient
-                    //TextBox txt = null;
-                    //if (clb == checkedListBoxEncrypt) txt = txtEncryptSelection;
-                    //else if (clb == checkedListBoxDecrypt) txt = txtDecryptSelection;
-                    //else if (clb == checkedListBoxCompress) txt = txtCompressSelection;
-                    //else if (clb == checkedListBoxDecompress) txt = txtDecompressSelection;
-                    //if (txt != null) UpdateSelectionDisplay(clb, txt);
-                }
+                clb.Visible = false;
             }
         }
 

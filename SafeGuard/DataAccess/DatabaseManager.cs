@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Text;
+using System.Linq;
 
 namespace SafeGuard.DataAccess
 {
@@ -66,6 +68,200 @@ namespace SafeGuard.DataAccess
                   FOREIGN KEY (`original_file_id`) REFERENCES `files` (`file_id`) ON DELETE CASCADE
                 );";
             ExecuteNonQuery(createTableSql);
+        }
+
+        public List<ComboboxItem> GetAllFilesForComboBox()
+        {
+            var items = new List<ComboboxItem>();
+            string query = "SELECT file_id, file_name FROM files ORDER BY file_name ASC";
+            MySqlConnection conn = null; // Declare outside using for logging in finally
+            try
+            {
+                Console.WriteLine("GetAllFilesForComboBox: Attempting to connect...");
+                conn = new MySqlConnection(_connectionString);
+                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                {
+                    conn.Open();
+                    Console.WriteLine("GetAllFilesForComboBox: Connection opened.");
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        Console.WriteLine("GetAllFilesForComboBox: Executed reader.");
+                        int count = 0;
+                        while (reader.Read())
+                        {
+                            count++;
+                            items.Add(new ComboboxItem
+                            {
+                                Text = reader.GetString("file_name"),
+                                Value = reader.GetInt32("file_id")
+                            });
+                        }
+                        Console.WriteLine($"GetAllFilesForComboBox: Read {count} items.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"!!!!!!!! DATABASE ERROR in GetAllFilesForComboBox: {ex.Message} !!!!!!!!!");
+                Console.WriteLine(ex.StackTrace); // Log stack trace too
+                 // Optional: Show error to user directly from here for debugging
+                 // MessageBox.Show($"DB Error (GetAllFiles): {ex.Message}");
+            }
+            finally // Ensure connection is closed even if error occurs
+            {
+                 if (conn != null && conn.State == System.Data.ConnectionState.Open)
+                 {
+                     conn.Close();
+                     Console.WriteLine("GetAllFilesForComboBox: Connection closed in finally block.");
+                 }
+            }
+            Console.WriteLine($"GetAllFilesForComboBox: Returning {items.Count} items.");
+            return items;
+        }
+
+        // --- NEW: Method to delete files by their IDs ---
+        public int DeleteFilesByIds(List<int> fileIds)
+        {
+            if (fileIds == null || fileIds.Count == 0)
+            {
+                return 0; // Nothing to delete
+            }
+
+            // Construct the "DELETE ... WHERE file_id IN (...)" query safely
+            StringBuilder deleteQueryBuilder = new StringBuilder("DELETE FROM files WHERE file_id IN (");
+            var parameters = new List<MySqlParameter>();
+            for (int i = 0; i < fileIds.Count; i++)
+            {
+                string paramName = $"@id{i}";
+                deleteQueryBuilder.Append(paramName);
+                if (i < fileIds.Count - 1)
+                {
+                    deleteQueryBuilder.Append(", ");
+                }
+                parameters.Add(new MySqlParameter(paramName, fileIds[i]));
+            }
+            deleteQueryBuilder.Append(")");
+
+            string deleteQuery = deleteQueryBuilder.ToString();
+            Console.WriteLine($"Executing manual delete query: {deleteQuery}");
+
+            try
+            {
+                int rowsAffected = 0;
+                using (MySqlConnection conn = new MySqlConnection(_connectionString))
+                using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
+                {
+                    cmd.Parameters.AddRange(parameters.ToArray());
+                    conn.Open();
+                    rowsAffected = cmd.ExecuteNonQuery(); // ExecuteNonQuery returns rows affected
+                }
+                Console.WriteLine($"Manual delete removed {rowsAffected} record(s) from 'files' table (and cascaded).");
+                return rowsAffected;
+            }
+            catch (MySqlException ex) // Be specific with exception type if possible
+            {
+                Console.WriteLine($"Error executing manual delete query: {ex.Message}");
+                // Consider logging the specific IDs that failed if possible
+                // You might want to throw the exception to let the caller handle it
+                throw new Exception($"Database error during file deletion: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                 Console.WriteLine($"Generic error during manual delete: {ex.Message}");
+                 throw; // Re-throw other unexpected errors
+            }
+        }
+
+        public int CleanupMissingFiles()
+        {
+            var filesToCheck = new List<Tuple<int, string?>>(); // Store File ID and Path
+
+            // 1. Get all file IDs and paths from the database
+            string selectQuery = "SELECT file_id, file_path FROM files";
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(_connectionString))
+                using (MySqlCommand cmd = new MySqlCommand(selectQuery, conn))
+                {
+                    conn.Open();
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int fileId = reader.GetInt32("file_id");
+                            // Handle potential null paths, although file_path should ideally not be null
+                            string? filePath = reader.IsDBNull(reader.GetOrdinal("file_path")) ? null : reader.GetString("file_path");
+                            filesToCheck.Add(Tuple.Create(fileId, filePath));
+                        }
+                    }
+                } // Connection and reader are disposed here
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching file paths for cleanup: {ex.Message}");
+                // Depending on severity, you might want to re-throw or log differently
+                return 0; // Indicate no files were cleaned due to error fetching list
+            }
+
+
+            // 2. Identify files that no longer exist on disk
+            var idsToDelete = new List<int>();
+            foreach (var fileInfo in filesToCheck)
+            {
+                if (string.IsNullOrEmpty(fileInfo.Item2) || !System.IO.File.Exists(fileInfo.Item2))
+                {
+                    idsToDelete.Add(fileInfo.Item1);
+                    Console.WriteLine($"Marking file for cleanup (ID: {fileInfo.Item1}, Path: {fileInfo.Item2 ?? "NULL/Empty"}) - File not found.");
+                }
+            }
+
+            // 3. Delete the records if any were found missing
+            if (idsToDelete.Count > 0)
+            {
+                // Construct the "DELETE ... WHERE file_id IN (...)" query safely
+                StringBuilder deleteQueryBuilder = new StringBuilder("DELETE FROM files WHERE file_id IN (");
+                var parameters = new List<MySqlParameter>();
+                for (int i = 0; i < idsToDelete.Count; i++)
+                {
+                    string paramName = $"@id{i}";
+                    deleteQueryBuilder.Append(paramName);
+                    if (i < idsToDelete.Count - 1)
+                    {
+                        deleteQueryBuilder.Append(", ");
+                    }
+                    parameters.Add(new MySqlParameter(paramName, idsToDelete[i]));
+                }
+                deleteQueryBuilder.Append(")");
+
+                string deleteQuery = deleteQueryBuilder.ToString();
+                Console.WriteLine($"Executing cleanup query: {deleteQuery}"); // Log the query for debugging
+
+                try
+                {
+                    int rowsAffected = 0;
+                    using (MySqlConnection conn = new MySqlConnection(_connectionString))
+                    using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
+                    {
+                        cmd.Parameters.AddRange(parameters.ToArray());
+                        conn.Open();
+                        rowsAffected = cmd.ExecuteNonQuery();
+                    }
+                    Console.WriteLine($"Successfully cleaned up {rowsAffected} missing file record(s) from 'files' table (and cascaded).");
+                    return rowsAffected;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error executing cleanup delete query: {ex.Message}");
+                    // Log the specific IDs that failed if possible, or the full query + parameters
+                    // Consider how to handle partial failures if necessary
+                    return -1; // Indicate an error occurred during deletion
+                }
+            }
+            else
+            {
+                Console.WriteLine("No missing file records found during startup cleanup.");
+                return 0; // No files needed cleaning
+            }
         }
 
         // --- Data Insertion ---

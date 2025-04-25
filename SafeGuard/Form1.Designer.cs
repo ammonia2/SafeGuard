@@ -39,11 +39,12 @@ namespace SafeGuard
 
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle9 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle10 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle11 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle12 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
             panelHeader = new Panel();
+            linkLabel7 = new LinkLabel();
             linkLabel6 = new LinkLabel();
             linkLabel5 = new LinkLabel();
             linkLabel4 = new LinkLabel();
@@ -52,9 +53,9 @@ namespace SafeGuard
             linkLabel1 = new LinkLabel();
             headingNav = new Label();
             panelContent = new Panel();
+            viewAllFilesButton = new Button();
             panelDropPasteTarget = new Panel();
             lblDropPasteHint = new Label();
-            viewAllFilesButton = new Button();
             label13 = new Label();
             flowLayoutPanelRecentFiles = new FlowLayoutPanel();
             label3 = new Label();
@@ -106,6 +107,13 @@ namespace SafeGuard
             decompressionFileLabel = new Label();
             decompressionDescLabel = new Label();
             decompressionTitleLabel = new Label();
+            panelRemoveFiles = new Panel();
+            buttonDeleteSelectedFiles = new Button();
+            dropdownRemoveSelector = new Button();
+            txtRemoveSelect = new TextBox();
+            checkedListBoxRemove = new CheckedListBox();
+            label17 = new Label();
+            label16 = new Label();
             panelHeader.SuspendLayout();
             panelContent.SuspendLayout();
             panelDropPasteTarget.SuspendLayout();
@@ -115,11 +123,13 @@ namespace SafeGuard
             decryptionPanel.SuspendLayout();
             compressionPanel.SuspendLayout();
             decompressionPanel.SuspendLayout();
+            panelRemoveFiles.SuspendLayout();
             SuspendLayout();
             // 
             // panelHeader
             // 
             panelHeader.BackColor = Color.FromArgb(30, 30, 30);
+            panelHeader.Controls.Add(linkLabel7);
             panelHeader.Controls.Add(linkLabel6);
             panelHeader.Controls.Add(linkLabel5);
             panelHeader.Controls.Add(linkLabel4);
@@ -133,6 +143,24 @@ namespace SafeGuard
             panelHeader.Padding = new Padding(10, 20, 10, 10);
             panelHeader.Size = new Size(160, 532);
             panelHeader.TabIndex = 0;
+            // 
+            // linkLabel7
+            // 
+            linkLabel7.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel7.BackColor = Color.FromArgb(45, 45, 48);
+            linkLabel7.Font = new Font("Segoe UI", 10F);
+            linkLabel7.ForeColor = Color.White;
+            linkLabel7.LinkBehavior = LinkBehavior.NeverUnderline;
+            linkLabel7.LinkColor = Color.White;
+            linkLabel7.Location = new Point(23, 343);
+            linkLabel7.Name = "linkLabel7";
+            linkLabel7.Size = new Size(106, 35);
+            linkLabel7.TabIndex = 10;
+            linkLabel7.TabStop = true;
+            linkLabel7.Text = "Drop Files";
+            linkLabel7.TextAlign = ContentAlignment.MiddleCenter;
+            linkLabel7.VisitedLinkColor = Color.White;
+            linkLabel7.LinkClicked += linkRemoveFiles_LinkClicked;
             // 
             // linkLabel6
             // 
@@ -271,6 +299,21 @@ namespace SafeGuard
             panelContent.Size = new Size(703, 532);
             panelContent.TabIndex = 1;
             // 
+            // viewAllFilesButton
+            // 
+            viewAllFilesButton.BackColor = Color.Black;
+            viewAllFilesButton.FlatAppearance.BorderColor = Color.DimGray;
+            viewAllFilesButton.FlatStyle = FlatStyle.Flat;
+            viewAllFilesButton.Font = new Font("Segoe UI", 12F);
+            viewAllFilesButton.ForeColor = Color.White;
+            viewAllFilesButton.Location = new Point(308, 471);
+            viewAllFilesButton.Name = "viewAllFilesButton";
+            viewAllFilesButton.Size = new Size(110, 37);
+            viewAllFilesButton.TabIndex = 6;
+            viewAllFilesButton.Text = "View All";
+            viewAllFilesButton.UseVisualStyleBackColor = false;
+            viewAllFilesButton.Click += viewAllFilesButton_Click;
+            // 
             // panelDropPasteTarget
             // 
             panelDropPasteTarget.AllowDrop = true;
@@ -296,21 +339,6 @@ namespace SafeGuard
             lblDropPasteHint.TabIndex = 0;
             lblDropPasteHint.Text = "or drag && drop / paste image from clipboard here";
             lblDropPasteHint.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // viewAllFilesButton
-            // 
-            viewAllFilesButton.BackColor = Color.Black;
-            viewAllFilesButton.FlatAppearance.BorderColor = Color.DimGray;
-            viewAllFilesButton.FlatStyle = FlatStyle.Flat;
-            viewAllFilesButton.Font = new Font("Segoe UI", 12F);
-            viewAllFilesButton.ForeColor = Color.White;
-            viewAllFilesButton.Location = new Point(308, 471);
-            viewAllFilesButton.Name = "viewAllFilesButton";
-            viewAllFilesButton.Size = new Size(110, 37);
-            viewAllFilesButton.TabIndex = 6;
-            viewAllFilesButton.Text = "View All";
-            viewAllFilesButton.UseVisualStyleBackColor = false;
-            viewAllFilesButton.Click += viewAllFilesButton_Click;
             // 
             // label13
             // 
@@ -427,43 +455,43 @@ namespace SafeGuard
             dataGridViewFiles.BackgroundColor = Color.FromArgb(45, 45, 48);
             dataGridViewFiles.BorderStyle = BorderStyle.Fixed3D;
             dataGridViewFiles.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle9.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = Color.Black;
-            dataGridViewCellStyle9.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle9.ForeColor = Color.White;
-            dataGridViewCellStyle9.SelectionBackColor = Color.Gray;
-            dataGridViewCellStyle9.SelectionForeColor = Color.White;
-            dataGridViewCellStyle9.WrapMode = DataGridViewTriState.True;
-            dataGridViewFiles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.Black;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle1.ForeColor = Color.White;
+            dataGridViewCellStyle1.SelectionBackColor = Color.Gray;
+            dataGridViewCellStyle1.SelectionForeColor = Color.White;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dataGridViewFiles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dataGridViewFiles.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle10.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle10.BackColor = Color.FromArgb(60, 60, 60);
-            dataGridViewCellStyle10.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle10.ForeColor = Color.White;
-            dataGridViewCellStyle10.SelectionBackColor = Color.SteelBlue;
-            dataGridViewCellStyle10.SelectionForeColor = Color.White;
-            dataGridViewCellStyle10.WrapMode = DataGridViewTriState.False;
-            dataGridViewFiles.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.FromArgb(60, 60, 60);
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.ForeColor = Color.White;
+            dataGridViewCellStyle2.SelectionBackColor = Color.SteelBlue;
+            dataGridViewCellStyle2.SelectionForeColor = Color.White;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            dataGridViewFiles.DefaultCellStyle = dataGridViewCellStyle2;
             dataGridViewFiles.EnableHeadersVisualStyles = false;
             dataGridViewFiles.GridColor = Color.DimGray;
             dataGridViewFiles.Location = new Point(50, 192);
             dataGridViewFiles.Name = "dataGridViewFiles";
             dataGridViewFiles.ReadOnly = true;
             dataGridViewFiles.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle11.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle11.BackColor = Color.Black;
-            dataGridViewCellStyle11.Font = new Font("Segoe UI", 9F);
-            dataGridViewCellStyle11.ForeColor = Color.White;
-            dataGridViewCellStyle11.SelectionBackColor = Color.Gray;
-            dataGridViewCellStyle11.SelectionForeColor = Color.White;
-            dataGridViewCellStyle11.WrapMode = DataGridViewTriState.True;
-            dataGridViewFiles.RowHeadersDefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = Color.Black;
+            dataGridViewCellStyle3.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle3.ForeColor = Color.White;
+            dataGridViewCellStyle3.SelectionBackColor = Color.Gray;
+            dataGridViewCellStyle3.SelectionForeColor = Color.White;
+            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
+            dataGridViewFiles.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             dataGridViewFiles.RowHeadersWidth = 51;
-            dataGridViewCellStyle12.BackColor = Color.FromArgb(60, 60, 60);
-            dataGridViewCellStyle12.ForeColor = Color.White;
-            dataGridViewCellStyle12.SelectionBackColor = Color.SteelBlue;
-            dataGridViewCellStyle12.SelectionForeColor = Color.White;
-            dataGridViewFiles.RowsDefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle4.BackColor = Color.FromArgb(60, 60, 60);
+            dataGridViewCellStyle4.ForeColor = Color.White;
+            dataGridViewCellStyle4.SelectionBackColor = Color.SteelBlue;
+            dataGridViewCellStyle4.SelectionForeColor = Color.White;
+            dataGridViewFiles.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dataGridViewFiles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewFiles.Size = new Size(627, 261);
             dataGridViewFiles.TabIndex = 2;
@@ -1031,14 +1059,112 @@ namespace SafeGuard
             decompressionTitleLabel.TabIndex = 0;
             decompressionTitleLabel.Text = "File Decompression";
             // 
+            // panelRemoveFiles
+            // 
+            panelRemoveFiles.Controls.Add(buttonDeleteSelectedFiles);
+            panelRemoveFiles.Controls.Add(dropdownRemoveSelector);
+            panelRemoveFiles.Controls.Add(txtRemoveSelect);
+            panelRemoveFiles.Controls.Add(checkedListBoxRemove);
+            panelRemoveFiles.Controls.Add(label17);
+            panelRemoveFiles.Controls.Add(label16);
+            panelRemoveFiles.Dock = DockStyle.Fill;
+            panelRemoveFiles.Location = new Point(160, 0);
+            panelRemoveFiles.Name = "panelRemoveFiles";
+            panelRemoveFiles.Size = new Size(703, 532);
+            panelRemoveFiles.TabIndex = 8;
+            // 
+            // buttonDeleteSelectedFiles
+            // 
+            buttonDeleteSelectedFiles.BackColor = Color.Black;
+            buttonDeleteSelectedFiles.FlatAppearance.BorderColor = Color.DimGray;
+            buttonDeleteSelectedFiles.FlatStyle = FlatStyle.Flat;
+            buttonDeleteSelectedFiles.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            buttonDeleteSelectedFiles.ForeColor = Color.White;
+            buttonDeleteSelectedFiles.Location = new Point(292, 273);
+            buttonDeleteSelectedFiles.Name = "buttonDeleteSelectedFiles";
+            buttonDeleteSelectedFiles.Size = new Size(95, 41);
+            buttonDeleteSelectedFiles.TabIndex = 15;
+            buttonDeleteSelectedFiles.Text = "Remove";
+            buttonDeleteSelectedFiles.UseVisualStyleBackColor = false;
+            buttonDeleteSelectedFiles.Click += btnDeleteSelectedFiles_Click;
+            // 
+            // dropdownRemoveSelector
+            // 
+            dropdownRemoveSelector.BackColor = Color.FromArgb(70, 70, 70);
+            dropdownRemoveSelector.FlatAppearance.BorderSize = 0;
+            dropdownRemoveSelector.FlatStyle = FlatStyle.Flat;
+            dropdownRemoveSelector.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dropdownRemoveSelector.ForeColor = Color.White;
+            dropdownRemoveSelector.Location = new Point(382, 195);
+            dropdownRemoveSelector.Margin = new Padding(3, 2, 3, 2);
+            dropdownRemoveSelector.Name = "dropdownRemoveSelector";
+            dropdownRemoveSelector.Size = new Size(26, 22);
+            dropdownRemoveSelector.TabIndex = 14;
+            dropdownRemoveSelector.Text = "▼";
+            dropdownRemoveSelector.UseVisualStyleBackColor = false;
+            dropdownRemoveSelector.Click += btnDropdown_Click;
+            // 
+            // txtRemoveSelect
+            // 
+            txtRemoveSelect.BackColor = Color.FromArgb(60, 60, 60);
+            txtRemoveSelect.BorderStyle = BorderStyle.FixedSingle;
+            txtRemoveSelect.ForeColor = Color.White;
+            txtRemoveSelect.Location = new Point(275, 195);
+            txtRemoveSelect.Margin = new Padding(3, 2, 3, 2);
+            txtRemoveSelect.Name = "txtRemoveSelect";
+            txtRemoveSelect.ReadOnly = true;
+            txtRemoveSelect.Size = new Size(106, 23);
+            txtRemoveSelect.TabIndex = 13;
+            txtRemoveSelect.TabStop = false;
+            txtRemoveSelect.Text = "No selection";
+            // 
+            // checkedListBoxRemove
+            // 
+            checkedListBoxRemove.BackColor = Color.FromArgb(60, 60, 60);
+            checkedListBoxRemove.BorderStyle = BorderStyle.FixedSingle;
+            checkedListBoxRemove.CheckOnClick = true;
+            checkedListBoxRemove.ForeColor = Color.White;
+            checkedListBoxRemove.FormattingEnabled = true;
+            checkedListBoxRemove.Location = new Point(275, 218);
+            checkedListBoxRemove.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxRemove.Name = "checkedListBoxRemove";
+            checkedListBoxRemove.Size = new Size(134, 56);
+            checkedListBoxRemove.TabIndex = 12;
+            checkedListBoxRemove.Visible = false;
+            checkedListBoxRemove.ItemCheck += checkedListBox_ItemCheck;
+            checkedListBoxRemove.Leave += checkedListBox_Leave;
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label17.ForeColor = Color.White;
+            label17.Location = new Point(258, 68);
+            label17.Name = "label17";
+            label17.Size = new Size(171, 32);
+            label17.TabIndex = 6;
+            label17.Text = "Remove a File";
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label16.ForeColor = Color.White;
+            label16.Location = new Point(282, 151);
+            label16.Name = "label16";
+            label16.Size = new Size(116, 21);
+            label16.TabIndex = 5;
+            label16.Text = "Select the File";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(45, 45, 48);
             ClientSize = new Size(863, 532);
-            Controls.Add(panelContent);
+            Controls.Add(panelRemoveFiles);
             Controls.Add(panelEncryptionSettings);
+            Controls.Add(panelContent);
             Controls.Add(decryptionPanel);
             Controls.Add(decompressionPanel);
             Controls.Add(compressionPanel);
@@ -1046,6 +1172,7 @@ namespace SafeGuard
             Controls.Add(panelHeader);
             Name = "Form1";
             Text = "SafeGuard File Manager";
+            Load += Form1_Load;
             panelHeader.ResumeLayout(false);
             panelHeader.PerformLayout();
             panelContent.ResumeLayout(false);
@@ -1062,6 +1189,8 @@ namespace SafeGuard
             compressionPanel.PerformLayout();
             decompressionPanel.ResumeLayout(false);
             decompressionPanel.PerformLayout();
+            panelRemoveFiles.ResumeLayout(false);
+            panelRemoveFiles.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -1128,6 +1257,14 @@ namespace SafeGuard
         private Button btnCompressDropdown;
         private TextBox txtDecompressSelection;
         private Button btnDecompressDropdown;
+        private LinkLabel linkLabel7;
+        private Panel panelRemoveFiles;
+        private Label label17;
+        private Label label16;
+        private CheckedListBox checkedListBoxRemove;
+        private Button buttonDeleteSelectedFiles;
+        private Button dropdownRemoveSelector;
+        private TextBox txtRemoveSelect;
     }
 }
 // --- END OF UPDATED Form1.Designer.cs ---

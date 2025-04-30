@@ -139,22 +139,24 @@ namespace SafeGuard
             panelHeader.Controls.Add(headingNav);
             panelHeader.Dock = DockStyle.Left;
             panelHeader.Location = new Point(0, 0);
+            panelHeader.Margin = new Padding(3, 4, 3, 4);
             panelHeader.Name = "panelHeader";
-            panelHeader.Padding = new Padding(10, 20, 10, 10);
-            panelHeader.Size = new Size(160, 532);
+            panelHeader.Padding = new Padding(11, 27, 11, 13);
+            panelHeader.Size = new Size(192, 709);
             panelHeader.TabIndex = 0;
             // 
             // linkLabel7
             // 
             linkLabel7.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel7.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel7.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel7.Font = new Font("Segoe UI", 10F);
             linkLabel7.ForeColor = Color.White;
             linkLabel7.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel7.LinkColor = Color.White;
-            linkLabel7.Location = new Point(23, 343);
+            linkLabel7.Location = new Point(14, 478);
             linkLabel7.Name = "linkLabel7";
-            linkLabel7.Size = new Size(106, 35);
+            linkLabel7.Size = new Size(163, 47);
             linkLabel7.TabIndex = 10;
             linkLabel7.TabStop = true;
             linkLabel7.Text = "Drop Files";
@@ -165,14 +167,15 @@ namespace SafeGuard
             // linkLabel6
             // 
             linkLabel6.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel6.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel6.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel6.Font = new Font("Segoe UI", 10F);
             linkLabel6.ForeColor = Color.White;
             linkLabel6.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel6.LinkColor = Color.White;
-            linkLabel6.Location = new Point(25, 250);
+            linkLabel6.Location = new Point(14, 352);
             linkLabel6.Name = "linkLabel6";
-            linkLabel6.Size = new Size(104, 35);
+            linkLabel6.Size = new Size(163, 49);
             linkLabel6.TabIndex = 0;
             linkLabel6.TabStop = true;
             linkLabel6.Text = "Decompression";
@@ -183,14 +186,15 @@ namespace SafeGuard
             // linkLabel5
             // 
             linkLabel5.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel5.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel5.Font = new Font("Segoe UI", 10F);
             linkLabel5.ForeColor = Color.White;
             linkLabel5.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel5.LinkColor = Color.White;
-            linkLabel5.Location = new Point(24, 204);
+            linkLabel5.Location = new Point(14, 291);
             linkLabel5.Name = "linkLabel5";
-            linkLabel5.Size = new Size(105, 35);
+            linkLabel5.Size = new Size(164, 47);
             linkLabel5.TabIndex = 1;
             linkLabel5.TabStop = true;
             linkLabel5.Text = "Compression";
@@ -201,14 +205,15 @@ namespace SafeGuard
             // linkLabel4
             // 
             linkLabel4.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel4.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel4.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel4.Font = new Font("Segoe UI", 10F);
             linkLabel4.ForeColor = Color.White;
             linkLabel4.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel4.LinkColor = Color.White;
-            linkLabel4.Location = new Point(23, 295);
+            linkLabel4.Location = new Point(14, 416);
             linkLabel4.Name = "linkLabel4";
-            linkLabel4.Size = new Size(106, 35);
+            linkLabel4.Size = new Size(163, 45);
             linkLabel4.TabIndex = 2;
             linkLabel4.TabStop = true;
             linkLabel4.Text = "Files";
@@ -219,14 +224,15 @@ namespace SafeGuard
             // linkLabel3
             // 
             linkLabel3.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel3.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel3.Font = new Font("Segoe UI", 10F);
             linkLabel3.ForeColor = Color.White;
             linkLabel3.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel3.LinkColor = Color.White;
-            linkLabel3.Location = new Point(25, 116);
+            linkLabel3.Location = new Point(14, 172);
             linkLabel3.Name = "linkLabel3";
-            linkLabel3.Size = new Size(104, 35);
+            linkLabel3.Size = new Size(163, 47);
             linkLabel3.TabIndex = 3;
             linkLabel3.TabStop = true;
             linkLabel3.Text = "Encryption";
@@ -237,14 +243,15 @@ namespace SafeGuard
             // linkLabel2
             // 
             linkLabel2.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel2.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel2.Font = new Font("Segoe UI", 10F);
             linkLabel2.ForeColor = Color.White;
             linkLabel2.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel2.LinkColor = Color.White;
-            linkLabel2.Location = new Point(25, 160);
+            linkLabel2.Location = new Point(14, 232);
             linkLabel2.Name = "linkLabel2";
-            linkLabel2.Size = new Size(104, 35);
+            linkLabel2.Size = new Size(163, 47);
             linkLabel2.TabIndex = 9;
             linkLabel2.TabStop = true;
             linkLabel2.Text = "Decryption";
@@ -255,14 +262,15 @@ namespace SafeGuard
             // linkLabel1
             // 
             linkLabel1.ActiveLinkColor = Color.DeepSkyBlue;
+            linkLabel1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             linkLabel1.BackColor = Color.FromArgb(45, 45, 48);
             linkLabel1.Font = new Font("Segoe UI", 10F);
             linkLabel1.ForeColor = Color.White;
             linkLabel1.LinkBehavior = LinkBehavior.NeverUnderline;
             linkLabel1.LinkColor = Color.White;
-            linkLabel1.Location = new Point(24, 71);
+            linkLabel1.Location = new Point(14, 112);
             linkLabel1.Name = "linkLabel1";
-            linkLabel1.Size = new Size(105, 35);
+            linkLabel1.Size = new Size(164, 47);
             linkLabel1.TabIndex = 9;
             linkLabel1.TabStop = true;
             linkLabel1.Text = "Home";
@@ -272,14 +280,15 @@ namespace SafeGuard
             // 
             // headingNav
             // 
-            headingNav.AutoSize = true;
+            headingNav.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             headingNav.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             headingNav.ForeColor = Color.White;
-            headingNav.Location = new Point(23, 20);
+            headingNav.Location = new Point(11, 27);
             headingNav.Name = "headingNav";
-            headingNav.Size = new Size(106, 25);
+            headingNav.Size = new Size(167, 32);
             headingNav.TabIndex = 0;
             headingNav.Text = "SafeGuard";
+            headingNav.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // panelContent
             // 
@@ -294,21 +303,24 @@ namespace SafeGuard
             panelContent.Controls.Add(label1);
             panelContent.Dock = DockStyle.Fill;
             panelContent.ForeColor = Color.White;
-            panelContent.Location = new Point(160, 0);
+            panelContent.Location = new Point(192, 0);
+            panelContent.Margin = new Padding(3, 4, 3, 4);
             panelContent.Name = "panelContent";
-            panelContent.Size = new Size(703, 532);
+            panelContent.Size = new Size(794, 709);
             panelContent.TabIndex = 1;
             // 
             // viewAllFilesButton
             // 
+            viewAllFilesButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             viewAllFilesButton.BackColor = Color.Black;
             viewAllFilesButton.FlatAppearance.BorderColor = Color.DimGray;
             viewAllFilesButton.FlatStyle = FlatStyle.Flat;
             viewAllFilesButton.Font = new Font("Segoe UI", 12F);
             viewAllFilesButton.ForeColor = Color.White;
-            viewAllFilesButton.Location = new Point(308, 471);
+            viewAllFilesButton.Location = new Point(332, 607);
+            viewAllFilesButton.Margin = new Padding(3, 4, 3, 4);
             viewAllFilesButton.Name = "viewAllFilesButton";
-            viewAllFilesButton.Size = new Size(110, 37);
+            viewAllFilesButton.Size = new Size(117, 49);
             viewAllFilesButton.TabIndex = 6;
             viewAllFilesButton.Text = "View All";
             viewAllFilesButton.UseVisualStyleBackColor = false;
@@ -317,13 +329,15 @@ namespace SafeGuard
             // panelDropPasteTarget
             // 
             panelDropPasteTarget.AllowDrop = true;
+            panelDropPasteTarget.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             panelDropPasteTarget.BackColor = Color.FromArgb(60, 60, 60);
             panelDropPasteTarget.BorderStyle = BorderStyle.FixedSingle;
             panelDropPasteTarget.Controls.Add(lblDropPasteHint);
             panelDropPasteTarget.ForeColor = Color.DarkGray;
-            panelDropPasteTarget.Location = new Point(247, 236);
+            panelDropPasteTarget.Location = new Point(267, 312);
+            panelDropPasteTarget.Margin = new Padding(3, 4, 3, 4);
             panelDropPasteTarget.Name = "panelDropPasteTarget";
-            panelDropPasteTarget.Size = new Size(224, 53);
+            panelDropPasteTarget.Size = new Size(247, 70);
             panelDropPasteTarget.TabIndex = 7;
             panelDropPasteTarget.DragDrop += panelDropPasteTarget_DragDrop;
             panelDropPasteTarget.DragEnter += panelDropPasteTarget_DragEnter;
@@ -335,54 +349,60 @@ namespace SafeGuard
             lblDropPasteHint.ForeColor = Color.DarkGray;
             lblDropPasteHint.Location = new Point(0, 0);
             lblDropPasteHint.Name = "lblDropPasteHint";
-            lblDropPasteHint.Size = new Size(222, 51);
+            lblDropPasteHint.Size = new Size(245, 68);
             lblDropPasteHint.TabIndex = 0;
             lblDropPasteHint.Text = "or drag && drop / paste image from clipboard here";
             lblDropPasteHint.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // label13
             // 
-            label13.AutoSize = true;
+            label13.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label13.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label13.ForeColor = Color.White;
-            label13.Location = new Point(275, 144);
+            label13.Location = new Point(0, 189);
             label13.Name = "label13";
-            label13.Size = new Size(176, 28);
+            label13.Size = new Size(782, 35);
             label13.TabIndex = 5;
             label13.Text = "File Management";
+            label13.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // flowLayoutPanelRecentFiles
             // 
-            flowLayoutPanelRecentFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
+            flowLayoutPanelRecentFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             flowLayoutPanelRecentFiles.AutoScroll = true;
             flowLayoutPanelRecentFiles.BackColor = Color.FromArgb(45, 45, 48);
             flowLayoutPanelRecentFiles.ForeColor = Color.White;
-            flowLayoutPanelRecentFiles.Location = new Point(142, 361);
+            flowLayoutPanelRecentFiles.Location = new Point(187, 478);
+            flowLayoutPanelRecentFiles.Margin = new Padding(3, 4, 3, 4);
             flowLayoutPanelRecentFiles.Name = "flowLayoutPanelRecentFiles";
-            flowLayoutPanelRecentFiles.Size = new Size(422, 130);
+            flowLayoutPanelRecentFiles.Size = new Size(485, 112);
             flowLayoutPanelRecentFiles.TabIndex = 4;
+            flowLayoutPanelRecentFiles.WrapContents = false;
             // 
             // label3
             // 
-            label3.AutoSize = true;
+            label3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label3.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label3.ForeColor = Color.White;
-            label3.Location = new Point(301, 321);
+            label3.Location = new Point(0, 425);
             label3.Name = "label3";
-            label3.Size = new Size(125, 28);
+            label3.Size = new Size(782, 35);
             label3.TabIndex = 3;
             label3.Text = "Recent Files";
+            label3.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btnUpload
             // 
+            btnUpload.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             btnUpload.BackColor = Color.Black;
             btnUpload.FlatAppearance.BorderColor = Color.DimGray;
             btnUpload.FlatStyle = FlatStyle.Flat;
             btnUpload.Font = new Font("Segoe UI", 12F);
             btnUpload.ForeColor = Color.White;
-            btnUpload.Location = new Point(308, 184);
+            btnUpload.Location = new Point(332, 242);
+            btnUpload.Margin = new Padding(3, 4, 3, 4);
             btnUpload.Name = "btnUpload";
-            btnUpload.Size = new Size(110, 37);
+            btnUpload.Size = new Size(117, 49);
             btnUpload.TabIndex = 2;
             btnUpload.Text = "Upload";
             btnUpload.UseVisualStyleBackColor = false;
@@ -390,25 +410,27 @@ namespace SafeGuard
             // 
             // label2
             // 
-            label2.AutoSize = true;
+            label2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label2.Font = new Font("Segoe UI", 12F);
             label2.ForeColor = Color.White;
-            label2.Location = new Point(261, 95);
+            label2.Location = new Point(0, 124);
             label2.Name = "label2";
-            label2.Size = new Size(205, 21);
+            label2.Size = new Size(782, 28);
             label2.TabIndex = 1;
             label2.Text = "Manage your files efficiently";
+            label2.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // label1
             // 
-            label1.AutoSize = true;
+            label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.ForeColor = Color.White;
-            label1.Location = new Point(292, 45);
+            label1.Location = new Point(0, 57);
             label1.Name = "label1";
-            label1.Size = new Size(138, 32);
+            label1.Size = new Size(782, 41);
             label1.TabIndex = 0;
             label1.Text = "Dashboard";
+            label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // panelFileManagement
             // 
@@ -419,39 +441,44 @@ namespace SafeGuard
             panelFileManagement.Controls.Add(label14);
             panelFileManagement.Dock = DockStyle.Fill;
             panelFileManagement.ForeColor = Color.White;
-            panelFileManagement.Location = new Point(160, 0);
+            panelFileManagement.Location = new Point(192, 0);
+            panelFileManagement.Margin = new Padding(3, 4, 3, 4);
             panelFileManagement.Name = "panelFileManagement";
-            panelFileManagement.Size = new Size(703, 532);
+            panelFileManagement.Size = new Size(794, 709);
             panelFileManagement.TabIndex = 7;
             panelFileManagement.Visible = false;
             // 
             // label15
             // 
-            label15.AutoSize = true;
+            label15.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label15.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label15.ForeColor = Color.White;
-            label15.Location = new Point(300, 100);
+            label15.Location = new Point(6, 133);
             label15.Name = "label15";
-            label15.Size = new Size(127, 21);
+            label15.Size = new Size(782, 28);
             label15.TabIndex = 4;
             label15.Text = "Select File Type";
+            label15.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // cmbTables
             // 
+            cmbTables.Anchor = AnchorStyles.Top;
             cmbTables.BackColor = Color.FromArgb(60, 60, 60);
             cmbTables.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbTables.FlatStyle = FlatStyle.Flat;
             cmbTables.ForeColor = Color.White;
             cmbTables.FormattingEnabled = true;
-            cmbTables.Location = new Point(303, 138);
+            cmbTables.Location = new Point(328, 184);
+            cmbTables.Margin = new Padding(3, 4, 3, 4);
             cmbTables.Name = "cmbTables";
-            cmbTables.Size = new Size(121, 23);
+            cmbTables.Size = new Size(138, 28);
             cmbTables.TabIndex = 3;
             // 
             // dataGridViewFiles
             // 
             dataGridViewFiles.AllowUserToAddRows = false;
             dataGridViewFiles.AllowUserToDeleteRows = false;
+            dataGridViewFiles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dataGridViewFiles.BackgroundColor = Color.FromArgb(45, 45, 48);
             dataGridViewFiles.BorderStyle = BorderStyle.Fixed3D;
             dataGridViewFiles.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
@@ -474,7 +501,8 @@ namespace SafeGuard
             dataGridViewFiles.DefaultCellStyle = dataGridViewCellStyle2;
             dataGridViewFiles.EnableHeadersVisualStyles = false;
             dataGridViewFiles.GridColor = Color.DimGray;
-            dataGridViewFiles.Location = new Point(50, 192);
+            dataGridViewFiles.Location = new Point(40, 256);
+            dataGridViewFiles.Margin = new Padding(40, 4, 40, 4);
             dataGridViewFiles.Name = "dataGridViewFiles";
             dataGridViewFiles.ReadOnly = true;
             dataGridViewFiles.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
@@ -493,20 +521,21 @@ namespace SafeGuard
             dataGridViewCellStyle4.SelectionForeColor = Color.White;
             dataGridViewFiles.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dataGridViewFiles.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewFiles.Size = new Size(627, 261);
+            dataGridViewFiles.Size = new Size(714, 409);
             dataGridViewFiles.TabIndex = 2;
             dataGridViewFiles.CellDoubleClick += dataGridViewFiles_CellDoubleClick;
             // 
             // label14
             // 
-            label14.AutoSize = true;
+            label14.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label14.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label14.ForeColor = Color.White;
-            label14.Location = new Point(258, 45);
+            label14.Location = new Point(6, 60);
             label14.Name = "label14";
-            label14.Size = new Size(211, 32);
+            label14.Size = new Size(782, 41);
             label14.TabIndex = 1;
             label14.Text = "File Management";
+            label14.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // panelEncryptionSettings
             // 
@@ -525,37 +554,38 @@ namespace SafeGuard
             panelEncryptionSettings.Controls.Add(label4);
             panelEncryptionSettings.Dock = DockStyle.Fill;
             panelEncryptionSettings.ForeColor = Color.White;
-            panelEncryptionSettings.Location = new Point(160, 0);
+            panelEncryptionSettings.Location = new Point(192, 0);
+            panelEncryptionSettings.Margin = new Padding(3, 4, 3, 4);
             panelEncryptionSettings.Name = "panelEncryptionSettings";
-            panelEncryptionSettings.Size = new Size(703, 532);
+            panelEncryptionSettings.Size = new Size(794, 709);
             panelEncryptionSettings.TabIndex = 5;
             panelEncryptionSettings.Visible = false;
             // 
             // txtEncryptSelection
             // 
+            txtEncryptSelection.Anchor = AnchorStyles.Top;
             txtEncryptSelection.BackColor = Color.FromArgb(60, 60, 60);
             txtEncryptSelection.BorderStyle = BorderStyle.FixedSingle;
             txtEncryptSelection.ForeColor = Color.White;
-            txtEncryptSelection.Location = new Point(103, 222);
-            txtEncryptSelection.Margin = new Padding(3, 2, 3, 2);
+            txtEncryptSelection.Location = new Point(114, 296);
             txtEncryptSelection.Name = "txtEncryptSelection";
             txtEncryptSelection.ReadOnly = true;
-            txtEncryptSelection.Size = new Size(106, 23);
+            txtEncryptSelection.Size = new Size(121, 27);
             txtEncryptSelection.TabIndex = 7;
             txtEncryptSelection.TabStop = false;
             txtEncryptSelection.Text = "No selection";
             // 
             // btnEncryptDropdown
             // 
+            btnEncryptDropdown.Anchor = AnchorStyles.Top;
             btnEncryptDropdown.BackColor = Color.FromArgb(70, 70, 70);
             btnEncryptDropdown.FlatAppearance.BorderSize = 0;
             btnEncryptDropdown.FlatStyle = FlatStyle.Flat;
             btnEncryptDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnEncryptDropdown.ForeColor = Color.White;
-            btnEncryptDropdown.Location = new Point(210, 221);
-            btnEncryptDropdown.Margin = new Padding(3, 2, 3, 2);
+            btnEncryptDropdown.Location = new Point(236, 295);
             btnEncryptDropdown.Name = "btnEncryptDropdown";
-            btnEncryptDropdown.Size = new Size(26, 22);
+            btnEncryptDropdown.Size = new Size(30, 29);
             btnEncryptDropdown.TabIndex = 10;
             btnEncryptDropdown.Text = "▼";
             btnEncryptDropdown.UseVisualStyleBackColor = false;
@@ -563,15 +593,15 @@ namespace SafeGuard
             // 
             // checkedListBoxEncrypt
             // 
+            checkedListBoxEncrypt.Anchor = AnchorStyles.Top;
             checkedListBoxEncrypt.BackColor = Color.FromArgb(60, 60, 60);
             checkedListBoxEncrypt.BorderStyle = BorderStyle.FixedSingle;
             checkedListBoxEncrypt.CheckOnClick = true;
             checkedListBoxEncrypt.ForeColor = Color.White;
             checkedListBoxEncrypt.FormattingEnabled = true;
-            checkedListBoxEncrypt.Location = new Point(103, 244);
-            checkedListBoxEncrypt.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxEncrypt.Location = new Point(114, 325);
             checkedListBoxEncrypt.Name = "checkedListBoxEncrypt";
-            checkedListBoxEncrypt.Size = new Size(134, 56);
+            checkedListBoxEncrypt.Size = new Size(153, 68);
             checkedListBoxEncrypt.TabIndex = 11;
             checkedListBoxEncrypt.Visible = false;
             checkedListBoxEncrypt.ItemCheck += checkedListBox_ItemCheck;
@@ -579,14 +609,16 @@ namespace SafeGuard
             // 
             // encryptButton
             // 
+            encryptButton.Anchor = AnchorStyles.Top;
             encryptButton.BackColor = Color.Black;
             encryptButton.FlatAppearance.BorderColor = Color.DimGray;
             encryptButton.FlatStyle = FlatStyle.Flat;
             encryptButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             encryptButton.ForeColor = Color.White;
-            encryptButton.Location = new Point(321, 330);
+            encryptButton.Location = new Point(343, 440);
+            encryptButton.Margin = new Padding(3, 4, 3, 4);
             encryptButton.Name = "encryptButton";
-            encryptButton.Size = new Size(95, 41);
+            encryptButton.Size = new Size(109, 55);
             encryptButton.TabIndex = 9;
             encryptButton.Text = "Encrypt";
             encryptButton.UseVisualStyleBackColor = false;
@@ -594,81 +626,90 @@ namespace SafeGuard
             // 
             // label8
             // 
+            label8.Anchor = AnchorStyles.Top;
             label8.AutoSize = true;
             label8.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label8.ForeColor = Color.White;
-            label8.Location = new Point(122, 192);
+            label8.Location = new Point(137, 256);
             label8.Name = "label8";
-            label8.Size = new Size(87, 21);
+            label8.Size = new Size(108, 28);
             label8.TabIndex = 8;
             label8.Text = "Select File";
             // 
             // encryptionKeyBox
             // 
+            encryptionKeyBox.Anchor = AnchorStyles.Top;
             encryptionKeyBox.BackColor = Color.FromArgb(60, 60, 60);
             encryptionKeyBox.BorderStyle = BorderStyle.FixedSingle;
             encryptionKeyBox.ForeColor = Color.White;
-            encryptionKeyBox.Location = new Point(495, 222);
+            encryptionKeyBox.Location = new Point(548, 296);
+            encryptionKeyBox.Margin = new Padding(3, 4, 3, 4);
             encryptionKeyBox.Name = "encryptionKeyBox";
-            encryptionKeyBox.Size = new Size(100, 23);
+            encryptionKeyBox.Size = new Size(114, 27);
             encryptionKeyBox.TabIndex = 6;
             // 
             // label7
             // 
+            label7.Anchor = AnchorStyles.Top;
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label7.ForeColor = Color.White;
-            label7.Location = new Point(488, 192);
+            label7.Location = new Point(526, 256);
             label7.Name = "label7";
-            label7.Size = new Size(126, 21);
+            label7.Size = new Size(156, 28);
             label7.TabIndex = 5;
             label7.Text = "Encryption Key\r\n";
             // 
             // label
             // 
+            label.Anchor = AnchorStyles.Top;
             label.AutoSize = true;
             label.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label.ForeColor = Color.White;
-            label.Location = new Point(288, 192);
+            label.Location = new Point(302, 256);
             label.Name = "label";
-            label.Size = new Size(158, 21);
+            label.Size = new Size(195, 28);
             label.TabIndex = 3;
             label.Text = "Encryption Method";
             // 
             // encryptionMethodSelection
             // 
+            encryptionMethodSelection.Anchor = AnchorStyles.Top;
             encryptionMethodSelection.BackColor = Color.FromArgb(60, 60, 60);
             encryptionMethodSelection.DropDownStyle = ComboBoxStyle.DropDownList;
             encryptionMethodSelection.FlatStyle = FlatStyle.Flat;
             encryptionMethodSelection.ForeColor = Color.White;
             encryptionMethodSelection.FormattingEnabled = true;
             encryptionMethodSelection.Items.AddRange(new object[] { "AES", "Pixel Scrambling" });
-            encryptionMethodSelection.Location = new Point(303, 222);
+            encryptionMethodSelection.Location = new Point(330, 296);
+            encryptionMethodSelection.Margin = new Padding(3, 4, 3, 4);
             encryptionMethodSelection.Name = "encryptionMethodSelection";
-            encryptionMethodSelection.Size = new Size(121, 23);
+            encryptionMethodSelection.Size = new Size(138, 28);
             encryptionMethodSelection.TabIndex = 2;
             // 
             // label5
             // 
-            label5.AutoSize = true;
+            label5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label5.Font = new Font("Segoe UI", 12F);
             label5.ForeColor = Color.White;
-            label5.Location = new Point(227, 95);
+            label5.Location = new Point(6, 127);
             label5.Name = "label5";
-            label5.Size = new Size(272, 21);
+            label5.Size = new Size(782, 28);
             label5.TabIndex = 1;
             label5.Text = "Select Encryption Method and Set Key";
+            label5.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // label4
             // 
-            label4.AutoSize = true;
+            label4.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label4.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label4.ForeColor = Color.White;
-            label4.Location = new Point(271, 45);
+            label4.Location = new Point(6, 60);
             label4.Name = "label4";
-            label4.Size = new Size(185, 32);
+            label4.Size = new Size(782, 41);
             label4.TabIndex = 0;
             label4.Text = "File Encryption";
+            label4.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // decryptionPanel
             // 
@@ -687,37 +728,38 @@ namespace SafeGuard
             decryptionPanel.Controls.Add(label12);
             decryptionPanel.Dock = DockStyle.Fill;
             decryptionPanel.ForeColor = Color.White;
-            decryptionPanel.Location = new Point(160, 0);
+            decryptionPanel.Location = new Point(192, 0);
+            decryptionPanel.Margin = new Padding(3, 4, 3, 4);
             decryptionPanel.Name = "decryptionPanel";
-            decryptionPanel.Size = new Size(703, 532);
+            decryptionPanel.Size = new Size(794, 709);
             decryptionPanel.TabIndex = 6;
             decryptionPanel.Visible = false;
             // 
             // txtDecryptSelection
             // 
+            txtDecryptSelection.Anchor = AnchorStyles.Top;
             txtDecryptSelection.BackColor = Color.FromArgb(60, 60, 60);
             txtDecryptSelection.BorderStyle = BorderStyle.FixedSingle;
             txtDecryptSelection.ForeColor = Color.White;
-            txtDecryptSelection.Location = new Point(96, 220);
-            txtDecryptSelection.Margin = new Padding(3, 2, 3, 2);
+            txtDecryptSelection.Location = new Point(106, 293);
             txtDecryptSelection.Name = "txtDecryptSelection";
             txtDecryptSelection.ReadOnly = true;
-            txtDecryptSelection.Size = new Size(106, 23);
+            txtDecryptSelection.Size = new Size(121, 27);
             txtDecryptSelection.TabIndex = 7;
             txtDecryptSelection.TabStop = false;
             txtDecryptSelection.Text = "No selection";
             // 
             // btnDecryptDropdown
             // 
+            btnDecryptDropdown.Anchor = AnchorStyles.Top;
             btnDecryptDropdown.BackColor = Color.FromArgb(70, 70, 70);
             btnDecryptDropdown.FlatAppearance.BorderSize = 0;
             btnDecryptDropdown.FlatStyle = FlatStyle.Flat;
             btnDecryptDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnDecryptDropdown.ForeColor = Color.White;
-            btnDecryptDropdown.Location = new Point(203, 219);
-            btnDecryptDropdown.Margin = new Padding(3, 2, 3, 2);
+            btnDecryptDropdown.Location = new Point(228, 292);
             btnDecryptDropdown.Name = "btnDecryptDropdown";
-            btnDecryptDropdown.Size = new Size(26, 22);
+            btnDecryptDropdown.Size = new Size(30, 29);
             btnDecryptDropdown.TabIndex = 10;
             btnDecryptDropdown.Text = "▼";
             btnDecryptDropdown.UseVisualStyleBackColor = false;
@@ -725,15 +767,15 @@ namespace SafeGuard
             // 
             // checkedListBoxDecrypt
             // 
+            checkedListBoxDecrypt.Anchor = AnchorStyles.Top;
             checkedListBoxDecrypt.BackColor = Color.FromArgb(60, 60, 60);
             checkedListBoxDecrypt.BorderStyle = BorderStyle.FixedSingle;
             checkedListBoxDecrypt.CheckOnClick = true;
             checkedListBoxDecrypt.ForeColor = Color.White;
             checkedListBoxDecrypt.FormattingEnabled = true;
-            checkedListBoxDecrypt.Location = new Point(96, 242);
-            checkedListBoxDecrypt.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxDecrypt.Location = new Point(106, 323);
             checkedListBoxDecrypt.Name = "checkedListBoxDecrypt";
-            checkedListBoxDecrypt.Size = new Size(134, 56);
+            checkedListBoxDecrypt.Size = new Size(153, 68);
             checkedListBoxDecrypt.TabIndex = 11;
             checkedListBoxDecrypt.Visible = false;
             checkedListBoxDecrypt.ItemCheck += checkedListBox_ItemCheck;
@@ -741,14 +783,16 @@ namespace SafeGuard
             // 
             // decryptButton
             // 
+            decryptButton.Anchor = AnchorStyles.Top;
             decryptButton.BackColor = Color.Black;
             decryptButton.FlatAppearance.BorderColor = Color.DimGray;
             decryptButton.FlatStyle = FlatStyle.Flat;
             decryptButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             decryptButton.ForeColor = Color.White;
-            decryptButton.Location = new Point(312, 329);
+            decryptButton.Location = new Point(343, 439);
+            decryptButton.Margin = new Padding(3, 4, 3, 4);
             decryptButton.Name = "decryptButton";
-            decryptButton.Size = new Size(95, 41);
+            decryptButton.Size = new Size(109, 55);
             decryptButton.TabIndex = 9;
             decryptButton.Text = "Decrypt";
             decryptButton.UseVisualStyleBackColor = false;
@@ -756,80 +800,89 @@ namespace SafeGuard
             // 
             // label6
             // 
+            label6.Anchor = AnchorStyles.Top;
             label6.AutoSize = true;
             label6.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label6.ForeColor = Color.White;
-            label6.Location = new Point(115, 190);
+            label6.Location = new Point(129, 253);
             label6.Name = "label6";
-            label6.Size = new Size(87, 21);
+            label6.Size = new Size(108, 28);
             label6.TabIndex = 8;
             label6.Text = "Select File";
             // 
             // decryptionKey
             // 
+            decryptionKey.Anchor = AnchorStyles.Top;
             decryptionKey.BackColor = Color.FromArgb(60, 60, 60);
             decryptionKey.BorderStyle = BorderStyle.FixedSingle;
             decryptionKey.ForeColor = Color.White;
-            decryptionKey.Location = new Point(488, 220);
+            decryptionKey.Location = new Point(540, 293);
+            decryptionKey.Margin = new Padding(3, 4, 3, 4);
             decryptionKey.Name = "decryptionKey";
-            decryptionKey.Size = new Size(100, 23);
+            decryptionKey.Size = new Size(114, 27);
             decryptionKey.TabIndex = 6;
             // 
             // label9
             // 
+            label9.Anchor = AnchorStyles.Top;
             label9.AutoSize = true;
             label9.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label9.ForeColor = Color.White;
-            label9.Location = new Point(481, 190);
+            label9.Location = new Point(518, 253);
             label9.Name = "label9";
-            label9.Size = new Size(128, 21);
+            label9.Size = new Size(159, 28);
             label9.TabIndex = 5;
             label9.Text = "Decryption Key\r\n";
             // 
             // label10
             // 
+            label10.Anchor = AnchorStyles.Top;
             label10.AutoSize = true;
             label10.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label10.ForeColor = Color.White;
-            label10.Location = new Point(281, 190);
+            label10.Location = new Point(294, 253);
             label10.Name = "label10";
-            label10.Size = new Size(160, 21);
+            label10.Size = new Size(198, 28);
             label10.TabIndex = 3;
             label10.Text = "Decryption Method";
             // 
             // decryptionMethodSelection
             // 
+            decryptionMethodSelection.Anchor = AnchorStyles.Top;
             decryptionMethodSelection.BackColor = Color.FromArgb(60, 60, 60);
             decryptionMethodSelection.DropDownStyle = ComboBoxStyle.DropDownList;
             decryptionMethodSelection.FlatStyle = FlatStyle.Flat;
             decryptionMethodSelection.ForeColor = Color.White;
             decryptionMethodSelection.FormattingEnabled = true;
-            decryptionMethodSelection.Location = new Point(296, 220);
+            decryptionMethodSelection.Location = new Point(322, 293);
+            decryptionMethodSelection.Margin = new Padding(3, 4, 3, 4);
             decryptionMethodSelection.Name = "decryptionMethodSelection";
-            decryptionMethodSelection.Size = new Size(121, 23);
+            decryptionMethodSelection.Size = new Size(138, 28);
             decryptionMethodSelection.TabIndex = 2;
             // 
             // label11
             // 
-            label11.AutoSize = true;
+            label11.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label11.Font = new Font("Segoe UI", 12F);
             label11.ForeColor = Color.White;
-            label11.Location = new Point(211, 95);
+            label11.Location = new Point(6, 127);
             label11.Name = "label11";
-            label11.Size = new Size(305, 21);
+            label11.Size = new Size(782, 28);
             label11.TabIndex = 1;
             label11.Text = "Select Decryption Method and Provide Key";
+            label11.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // label12
             // 
-            label12.AutoSize = true;
+            label12.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label12.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label12.ForeColor = Color.White;
-            label12.Location = new Point(269, 45);
+            label12.Location = new Point(6, 60);
             label12.Name = "label12";
-            label12.Size = new Size(188, 32);
+            label12.Size = new Size(782, 41);
             label12.TabIndex = 0;
             label12.Text = "File Decryption";
+            label12.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // compressionPanel
             // 
@@ -844,37 +897,38 @@ namespace SafeGuard
             compressionPanel.Controls.Add(compressionTitleLabel);
             compressionPanel.Dock = DockStyle.Fill;
             compressionPanel.ForeColor = Color.White;
-            compressionPanel.Location = new Point(160, 0);
+            compressionPanel.Location = new Point(192, 0);
+            compressionPanel.Margin = new Padding(3, 4, 3, 4);
             compressionPanel.Name = "compressionPanel";
-            compressionPanel.Size = new Size(703, 532);
+            compressionPanel.Size = new Size(794, 709);
             compressionPanel.TabIndex = 8;
             compressionPanel.Visible = false;
             // 
             // txtCompressSelection
             // 
+            txtCompressSelection.Anchor = AnchorStyles.Top;
             txtCompressSelection.BackColor = Color.FromArgb(60, 60, 60);
             txtCompressSelection.BorderStyle = BorderStyle.FixedSingle;
             txtCompressSelection.ForeColor = Color.White;
-            txtCompressSelection.Location = new Point(297, 234);
-            txtCompressSelection.Margin = new Padding(3, 2, 3, 2);
+            txtCompressSelection.Location = new Point(322, 312);
             txtCompressSelection.Name = "txtCompressSelection";
             txtCompressSelection.ReadOnly = true;
-            txtCompressSelection.Size = new Size(106, 23);
+            txtCompressSelection.Size = new Size(121, 27);
             txtCompressSelection.TabIndex = 3;
             txtCompressSelection.TabStop = false;
             txtCompressSelection.Text = "No selection";
             // 
             // btnCompressDropdown
             // 
+            btnCompressDropdown.Anchor = AnchorStyles.Top;
             btnCompressDropdown.BackColor = Color.FromArgb(70, 70, 70);
             btnCompressDropdown.FlatAppearance.BorderSize = 0;
             btnCompressDropdown.FlatStyle = FlatStyle.Flat;
             btnCompressDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnCompressDropdown.ForeColor = Color.White;
-            btnCompressDropdown.Location = new Point(403, 233);
-            btnCompressDropdown.Margin = new Padding(3, 2, 3, 2);
+            btnCompressDropdown.Location = new Point(444, 311);
             btnCompressDropdown.Name = "btnCompressDropdown";
-            btnCompressDropdown.Size = new Size(26, 22);
+            btnCompressDropdown.Size = new Size(30, 29);
             btnCompressDropdown.TabIndex = 5;
             btnCompressDropdown.Text = "▼";
             btnCompressDropdown.UseVisualStyleBackColor = false;
@@ -882,15 +936,15 @@ namespace SafeGuard
             // 
             // checkedListBoxCompress
             // 
+            checkedListBoxCompress.Anchor = AnchorStyles.Top;
             checkedListBoxCompress.BackColor = Color.FromArgb(60, 60, 60);
             checkedListBoxCompress.BorderStyle = BorderStyle.FixedSingle;
             checkedListBoxCompress.CheckOnClick = true;
             checkedListBoxCompress.ForeColor = Color.White;
             checkedListBoxCompress.FormattingEnabled = true;
-            checkedListBoxCompress.Location = new Point(297, 257);
-            checkedListBoxCompress.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxCompress.Location = new Point(322, 343);
             checkedListBoxCompress.Name = "checkedListBoxCompress";
-            checkedListBoxCompress.Size = new Size(134, 56);
+            checkedListBoxCompress.Size = new Size(153, 68);
             checkedListBoxCompress.TabIndex = 6;
             checkedListBoxCompress.Visible = false;
             checkedListBoxCompress.ItemCheck += checkedListBox_ItemCheck;
@@ -898,15 +952,15 @@ namespace SafeGuard
             // 
             // compressButton
             // 
+            compressButton.Anchor = AnchorStyles.Top;
             compressButton.BackColor = Color.Black;
             compressButton.FlatAppearance.BorderColor = Color.DimGray;
             compressButton.FlatStyle = FlatStyle.Flat;
             compressButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             compressButton.ForeColor = Color.White;
-            compressButton.Location = new Point(307, 330);
-            compressButton.Margin = new Padding(3, 2, 3, 2);
+            compressButton.Location = new Point(333, 440);
             compressButton.Name = "compressButton";
-            compressButton.Size = new Size(113, 38);
+            compressButton.Size = new Size(129, 51);
             compressButton.TabIndex = 4;
             compressButton.Text = "Optimize";
             compressButton.UseVisualStyleBackColor = false;
@@ -914,36 +968,39 @@ namespace SafeGuard
             // 
             // compressionFileLabel
             // 
-            compressionFileLabel.AutoSize = true;
+            compressionFileLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             compressionFileLabel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             compressionFileLabel.ForeColor = Color.White;
-            compressionFileLabel.Location = new Point(320, 190);
+            compressionFileLabel.Location = new Point(6, 253);
             compressionFileLabel.Name = "compressionFileLabel";
-            compressionFileLabel.Size = new Size(87, 21);
+            compressionFileLabel.Size = new Size(782, 28);
             compressionFileLabel.TabIndex = 2;
             compressionFileLabel.Text = "Select File";
+            compressionFileLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // compressionDescLabel
             // 
-            compressionDescLabel.AutoSize = true;
+            compressionDescLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             compressionDescLabel.Font = new Font("Segoe UI", 12F);
             compressionDescLabel.ForeColor = Color.White;
-            compressionDescLabel.Location = new Point(210, 95);
+            compressionDescLabel.Location = new Point(6, 127);
             compressionDescLabel.Name = "compressionDescLabel";
-            compressionDescLabel.Size = new Size(306, 21);
+            compressionDescLabel.Size = new Size(782, 28);
             compressionDescLabel.TabIndex = 1;
             compressionDescLabel.Text = "Optimize your image files (JPG, PNG, BMP)";
+            compressionDescLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // compressionTitleLabel
             // 
-            compressionTitleLabel.AutoSize = true;
+            compressionTitleLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             compressionTitleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
             compressionTitleLabel.ForeColor = Color.White;
-            compressionTitleLabel.Location = new Point(259, 45);
+            compressionTitleLabel.Location = new Point(6, 60);
             compressionTitleLabel.Name = "compressionTitleLabel";
-            compressionTitleLabel.Size = new Size(209, 32);
+            compressionTitleLabel.Size = new Size(782, 41);
             compressionTitleLabel.TabIndex = 0;
             compressionTitleLabel.Text = "File Compression";
+            compressionTitleLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // decompressionPanel
             // 
@@ -958,37 +1015,38 @@ namespace SafeGuard
             decompressionPanel.Controls.Add(decompressionTitleLabel);
             decompressionPanel.Dock = DockStyle.Fill;
             decompressionPanel.ForeColor = Color.White;
-            decompressionPanel.Location = new Point(160, 0);
+            decompressionPanel.Location = new Point(192, 0);
+            decompressionPanel.Margin = new Padding(3, 4, 3, 4);
             decompressionPanel.Name = "decompressionPanel";
-            decompressionPanel.Size = new Size(703, 532);
+            decompressionPanel.Size = new Size(794, 709);
             decompressionPanel.TabIndex = 9;
             decompressionPanel.Visible = false;
             // 
             // txtDecompressSelection
             // 
+            txtDecompressSelection.Anchor = AnchorStyles.Top;
             txtDecompressSelection.BackColor = Color.FromArgb(60, 60, 60);
             txtDecompressSelection.BorderStyle = BorderStyle.FixedSingle;
             txtDecompressSelection.ForeColor = Color.White;
-            txtDecompressSelection.Location = new Point(297, 234);
-            txtDecompressSelection.Margin = new Padding(3, 2, 3, 2);
+            txtDecompressSelection.Location = new Point(322, 312);
             txtDecompressSelection.Name = "txtDecompressSelection";
             txtDecompressSelection.ReadOnly = true;
-            txtDecompressSelection.Size = new Size(106, 23);
+            txtDecompressSelection.Size = new Size(121, 27);
             txtDecompressSelection.TabIndex = 3;
             txtDecompressSelection.TabStop = false;
             txtDecompressSelection.Text = "No selection";
             // 
             // btnDecompressDropdown
             // 
+            btnDecompressDropdown.Anchor = AnchorStyles.Top;
             btnDecompressDropdown.BackColor = Color.FromArgb(70, 70, 70);
             btnDecompressDropdown.FlatAppearance.BorderSize = 0;
             btnDecompressDropdown.FlatStyle = FlatStyle.Flat;
             btnDecompressDropdown.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnDecompressDropdown.ForeColor = Color.White;
-            btnDecompressDropdown.Location = new Point(403, 233);
-            btnDecompressDropdown.Margin = new Padding(3, 2, 3, 2);
+            btnDecompressDropdown.Location = new Point(444, 311);
             btnDecompressDropdown.Name = "btnDecompressDropdown";
-            btnDecompressDropdown.Size = new Size(26, 22);
+            btnDecompressDropdown.Size = new Size(30, 29);
             btnDecompressDropdown.TabIndex = 5;
             btnDecompressDropdown.Text = "▼";
             btnDecompressDropdown.UseVisualStyleBackColor = false;
@@ -996,15 +1054,15 @@ namespace SafeGuard
             // 
             // checkedListBoxDecompress
             // 
+            checkedListBoxDecompress.Anchor = AnchorStyles.Top;
             checkedListBoxDecompress.BackColor = Color.FromArgb(60, 60, 60);
             checkedListBoxDecompress.BorderStyle = BorderStyle.FixedSingle;
             checkedListBoxDecompress.CheckOnClick = true;
             checkedListBoxDecompress.ForeColor = Color.White;
             checkedListBoxDecompress.FormattingEnabled = true;
-            checkedListBoxDecompress.Location = new Point(297, 257);
-            checkedListBoxDecompress.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxDecompress.Location = new Point(322, 343);
             checkedListBoxDecompress.Name = "checkedListBoxDecompress";
-            checkedListBoxDecompress.Size = new Size(134, 56);
+            checkedListBoxDecompress.Size = new Size(153, 68);
             checkedListBoxDecompress.TabIndex = 6;
             checkedListBoxDecompress.Visible = false;
             checkedListBoxDecompress.ItemCheck += checkedListBox_ItemCheck;
@@ -1012,15 +1070,15 @@ namespace SafeGuard
             // 
             // decompressButton
             // 
+            decompressButton.Anchor = AnchorStyles.Top;
             decompressButton.BackColor = Color.Black;
             decompressButton.FlatAppearance.BorderColor = Color.DimGray;
             decompressButton.FlatStyle = FlatStyle.Flat;
             decompressButton.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             decompressButton.ForeColor = Color.White;
-            decompressButton.Location = new Point(295, 330);
-            decompressButton.Margin = new Padding(3, 2, 3, 2);
+            decompressButton.Location = new Point(320, 440);
             decompressButton.Name = "decompressButton";
-            decompressButton.Size = new Size(136, 38);
+            decompressButton.Size = new Size(155, 51);
             decompressButton.TabIndex = 4;
             decompressButton.Text = "Decompress";
             decompressButton.UseVisualStyleBackColor = false;
@@ -1028,39 +1086,43 @@ namespace SafeGuard
             // 
             // decompressionFileLabel
             // 
-            decompressionFileLabel.AutoSize = true;
+            decompressionFileLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             decompressionFileLabel.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             decompressionFileLabel.ForeColor = Color.White;
-            decompressionFileLabel.Location = new Point(278, 190);
+            decompressionFileLabel.Location = new Point(6, 253);
             decompressionFileLabel.Name = "decompressionFileLabel";
-            decompressionFileLabel.Size = new Size(170, 21);
+            decompressionFileLabel.Size = new Size(782, 28);
             decompressionFileLabel.TabIndex = 2;
             decompressionFileLabel.Text = "Select Optimised File";
+            decompressionFileLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // decompressionDescLabel
             // 
-            decompressionDescLabel.AutoSize = true;
+            decompressionDescLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             decompressionDescLabel.Font = new Font("Segoe UI", 12F);
             decompressionDescLabel.ForeColor = Color.White;
-            decompressionDescLabel.Location = new Point(198, 95);
+            decompressionDescLabel.Location = new Point(6, 127);
             decompressionDescLabel.Name = "decompressionDescLabel";
-            decompressionDescLabel.Size = new Size(330, 21);
+            decompressionDescLabel.Size = new Size(782, 28);
             decompressionDescLabel.TabIndex = 1;
             decompressionDescLabel.Text = "Restore optimized files to their original format";
+            decompressionDescLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // decompressionTitleLabel
             // 
-            decompressionTitleLabel.AutoSize = true;
+            decompressionTitleLabel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             decompressionTitleLabel.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
             decompressionTitleLabel.ForeColor = Color.White;
-            decompressionTitleLabel.Location = new Point(245, 45);
+            decompressionTitleLabel.Location = new Point(6, 60);
             decompressionTitleLabel.Name = "decompressionTitleLabel";
-            decompressionTitleLabel.Size = new Size(237, 32);
+            decompressionTitleLabel.Size = new Size(782, 41);
             decompressionTitleLabel.TabIndex = 0;
             decompressionTitleLabel.Text = "File Decompression";
+            decompressionTitleLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // panelRemoveFiles
             // 
+            panelRemoveFiles.BackColor = Color.FromArgb(45, 45, 48);
             panelRemoveFiles.Controls.Add(buttonDeleteSelectedFiles);
             panelRemoveFiles.Controls.Add(dropdownRemoveSelector);
             panelRemoveFiles.Controls.Add(txtRemoveSelect);
@@ -1068,21 +1130,26 @@ namespace SafeGuard
             panelRemoveFiles.Controls.Add(label17);
             panelRemoveFiles.Controls.Add(label16);
             panelRemoveFiles.Dock = DockStyle.Fill;
-            panelRemoveFiles.Location = new Point(160, 0);
+            panelRemoveFiles.ForeColor = Color.White;
+            panelRemoveFiles.Location = new Point(192, 0);
+            panelRemoveFiles.Margin = new Padding(3, 4, 3, 4);
             panelRemoveFiles.Name = "panelRemoveFiles";
-            panelRemoveFiles.Size = new Size(703, 532);
-            panelRemoveFiles.TabIndex = 8;
+            panelRemoveFiles.Size = new Size(794, 709);
+            panelRemoveFiles.TabIndex = 10;
+            panelRemoveFiles.Visible = false;
             // 
             // buttonDeleteSelectedFiles
             // 
+            buttonDeleteSelectedFiles.Anchor = AnchorStyles.Top;
             buttonDeleteSelectedFiles.BackColor = Color.Black;
             buttonDeleteSelectedFiles.FlatAppearance.BorderColor = Color.DimGray;
             buttonDeleteSelectedFiles.FlatStyle = FlatStyle.Flat;
             buttonDeleteSelectedFiles.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             buttonDeleteSelectedFiles.ForeColor = Color.White;
-            buttonDeleteSelectedFiles.Location = new Point(292, 273);
+            buttonDeleteSelectedFiles.Location = new Point(343, 417);
+            buttonDeleteSelectedFiles.Margin = new Padding(3, 4, 3, 4);
             buttonDeleteSelectedFiles.Name = "buttonDeleteSelectedFiles";
-            buttonDeleteSelectedFiles.Size = new Size(95, 41);
+            buttonDeleteSelectedFiles.Size = new Size(109, 55);
             buttonDeleteSelectedFiles.TabIndex = 15;
             buttonDeleteSelectedFiles.Text = "Remove";
             buttonDeleteSelectedFiles.UseVisualStyleBackColor = false;
@@ -1090,15 +1157,15 @@ namespace SafeGuard
             // 
             // dropdownRemoveSelector
             // 
+            dropdownRemoveSelector.Anchor = AnchorStyles.Top;
             dropdownRemoveSelector.BackColor = Color.FromArgb(70, 70, 70);
             dropdownRemoveSelector.FlatAppearance.BorderSize = 0;
             dropdownRemoveSelector.FlatStyle = FlatStyle.Flat;
             dropdownRemoveSelector.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             dropdownRemoveSelector.ForeColor = Color.White;
-            dropdownRemoveSelector.Location = new Point(382, 195);
-            dropdownRemoveSelector.Margin = new Padding(3, 2, 3, 2);
+            dropdownRemoveSelector.Location = new Point(444, 288);
             dropdownRemoveSelector.Name = "dropdownRemoveSelector";
-            dropdownRemoveSelector.Size = new Size(26, 22);
+            dropdownRemoveSelector.Size = new Size(30, 29);
             dropdownRemoveSelector.TabIndex = 14;
             dropdownRemoveSelector.Text = "▼";
             dropdownRemoveSelector.UseVisualStyleBackColor = false;
@@ -1106,29 +1173,29 @@ namespace SafeGuard
             // 
             // txtRemoveSelect
             // 
+            txtRemoveSelect.Anchor = AnchorStyles.Top;
             txtRemoveSelect.BackColor = Color.FromArgb(60, 60, 60);
             txtRemoveSelect.BorderStyle = BorderStyle.FixedSingle;
             txtRemoveSelect.ForeColor = Color.White;
-            txtRemoveSelect.Location = new Point(275, 195);
-            txtRemoveSelect.Margin = new Padding(3, 2, 3, 2);
+            txtRemoveSelect.Location = new Point(322, 289);
             txtRemoveSelect.Name = "txtRemoveSelect";
             txtRemoveSelect.ReadOnly = true;
-            txtRemoveSelect.Size = new Size(106, 23);
+            txtRemoveSelect.Size = new Size(121, 27);
             txtRemoveSelect.TabIndex = 13;
             txtRemoveSelect.TabStop = false;
             txtRemoveSelect.Text = "No selection";
             // 
             // checkedListBoxRemove
             // 
+            checkedListBoxRemove.Anchor = AnchorStyles.Top;
             checkedListBoxRemove.BackColor = Color.FromArgb(60, 60, 60);
             checkedListBoxRemove.BorderStyle = BorderStyle.FixedSingle;
             checkedListBoxRemove.CheckOnClick = true;
             checkedListBoxRemove.ForeColor = Color.White;
             checkedListBoxRemove.FormattingEnabled = true;
-            checkedListBoxRemove.Location = new Point(275, 218);
-            checkedListBoxRemove.Margin = new Padding(3, 2, 3, 2);
+            checkedListBoxRemove.Location = new Point(322, 319);
             checkedListBoxRemove.Name = "checkedListBoxRemove";
-            checkedListBoxRemove.Size = new Size(134, 56);
+            checkedListBoxRemove.Size = new Size(153, 68);
             checkedListBoxRemove.TabIndex = 12;
             checkedListBoxRemove.Visible = false;
             checkedListBoxRemove.ItemCheck += checkedListBox_ItemCheck;
@@ -1136,50 +1203,51 @@ namespace SafeGuard
             // 
             // label17
             // 
-            label17.AutoSize = true;
+            label17.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label17.Font = new Font("Segoe UI", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label17.ForeColor = Color.White;
-            label17.Location = new Point(258, 68);
+            label17.Location = new Point(6, 91);
             label17.Name = "label17";
-            label17.Size = new Size(171, 32);
+            label17.Size = new Size(782, 41);
             label17.TabIndex = 6;
             label17.Text = "Remove a File";
+            label17.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // label16
             // 
-            label16.AutoSize = true;
+            label16.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label16.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label16.ForeColor = Color.White;
-            label16.Location = new Point(282, 151);
+            label16.Location = new Point(6, 229);
             label16.Name = "label16";
-            label16.Size = new Size(116, 21);
+            label16.Size = new Size(782, 28);
             label16.TabIndex = 5;
             label16.Text = "Select the File";
+            label16.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(45, 45, 48);
-            ClientSize = new Size(863, 532);
-            Controls.Add(panelRemoveFiles);
-            Controls.Add(panelEncryptionSettings);
+            ClientSize = new Size(986, 709);
             Controls.Add(panelContent);
-            Controls.Add(decryptionPanel);
+            Controls.Add(panelRemoveFiles);
             Controls.Add(decompressionPanel);
             Controls.Add(compressionPanel);
+            Controls.Add(decryptionPanel);
+            Controls.Add(panelEncryptionSettings);
             Controls.Add(panelFileManagement);
             Controls.Add(panelHeader);
+            Margin = new Padding(3, 4, 3, 4);
+            MinimumSize = new Size(800, 600);
             Name = "Form1";
             Text = "SafeGuard File Manager";
             Load += Form1_Load;
             panelHeader.ResumeLayout(false);
-            panelHeader.PerformLayout();
             panelContent.ResumeLayout(false);
-            panelContent.PerformLayout();
             panelDropPasteTarget.ResumeLayout(false);
             panelFileManagement.ResumeLayout(false);
-            panelFileManagement.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFiles).EndInit();
             panelEncryptionSettings.ResumeLayout(false);
             panelEncryptionSettings.PerformLayout();

@@ -66,8 +66,6 @@ namespace SafeGuard
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Perform initialization AFTER the form and its controls are created,
-            // but before it's shown to the user.
 
             // 1. Perform Database Cleanup (if DB is available)
             if (_dbManager != null && !string.IsNullOrEmpty(_connectionString) && !_connectionString.StartsWith("Server=none;"))
@@ -79,14 +77,10 @@ namespace SafeGuard
                     if (cleanedCount > 0)
                     {
                         Console.WriteLine($"Database cleanup removed {cleanedCount} records for missing files.");
-                        // Optional: Inform user if many files were removed, but typically this can be silent.
-                        // MessageBox.Show($"{cleanedCount} records for missing files were removed from the database.", "Database Cleanup", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else if (cleanedCount < 0)
                     {
                         Console.WriteLine("An error occurred during database cleanup.");
-                        // Optional: Notify user of cleanup error
-                        // MessageBox.Show("An error occurred while cleaning up database records.", "Cleanup Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                     else
                     {
@@ -142,8 +136,6 @@ namespace SafeGuard
                 return;
             }
 
-            // Get the DataRow corresponding to the clicked DataGridView row
-            // Use Rows[e.RowIndex].DataBoundItem which is a DataRowView, then get its Row
             if (!(dataGridViewFiles.Rows[e.RowIndex].DataBoundItem is DataRowView drv))
             {
                 Console.WriteLine($"Could not get DataRowView for row index {e.RowIndex}.");
@@ -192,8 +184,6 @@ namespace SafeGuard
 
                     if (!string.IsNullOrEmpty(filePath))
                     {
-                        // Use the existing helper method to attempt showing the image
-                        // It handles checking the extension and file existence internally
                         ShowImageInNewWindow(filePath, $"Viewer: {fileName}");
                     }
                     else
@@ -210,18 +200,14 @@ namespace SafeGuard
             {
                 // Log or show error specific to accessing grid data
                 Console.WriteLine($"Error accessing data grid row {e.RowIndex}: {ex.Message}");
-                // Optionally show a message to the user:
-                // ShowError($"Could not retrieve file details from the selected row.\n{ex.Message}");
             }
         }
 
         private void SetupComboBoxes()
         {
-            // --- ENSURE THESE LINES ARE PRESENT ---
             decryptionMethodSelection.Items.Clear(); // Clear any existing items first
             decryptionMethodSelection.Items.Add("AES");
             decryptionMethodSelection.Items.Add("Pixel Scrambling");
-            // ---------------------------------------
 
             // Setup for the File Management dropdown
             cmbTables.Items.Clear();
@@ -252,8 +238,6 @@ namespace SafeGuard
             }
         }
 
-        // SHARED Click handler for ALL dropdown buttons
-        // SHARED Click handler for ALL dropdown buttons
         private void btnDropdown_Click(object sender, EventArgs e)
         {
             Button btn = sender as Button;
@@ -385,9 +369,6 @@ namespace SafeGuard
                 image?.Dispose();
             }
         }
-
-        // --- NEW EVENT HANDLERS ---
-
         private void panelDropPasteTarget_DragEnter(object sender, DragEventArgs e)
         {
             // Check if the data being dragged is file data
@@ -613,12 +594,10 @@ namespace SafeGuard
                          cmbTables.SelectedIndex = 0;
                      LoadAllFilesToGrid();
                 }
-                // --- ADD THIS ELSE IF CONDITION ---
                 else if (panelToShow == panelRemoveFiles)
                 {
                     LoadFilesForRemoval(); // Load data when this panel becomes active
                 }
-                // --- END ADDITION ---
                 else if (panelToShow == panelContent)
                 {
                     LoadRecentFiles(); // Optionally reload recent files when going home
@@ -708,10 +687,9 @@ namespace SafeGuard
         {
              if (_dbManager == null) return;
              checkedListBoxRemove.Items.Clear(); // Clear existing items
-             txtRemoveSelect.Text = "No selection"; // <<<--- ADD THIS LINE to reset display text
+             txtRemoveSelect.Text = "No selection"; //to reset display text
              try
              {
-                 // Use the new DB manager method
                  List<ComboboxItem> allFiles = _dbManager.GetAllFilesForComboBox();
                  foreach (var item in allFiles)
                  {
@@ -800,21 +778,13 @@ namespace SafeGuard
             }
         }
 
-                // --- MODIFY THIS EXISTING SHARED HANDLER ---
         private void checkedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
         {
             CheckedListBox clb = sender as CheckedListBox;
             if (clb == null) return;
 
-            // --- Selection Limit Logic (Keep as is or adjust MaxBatchSize if needed for removal) ---
-            // Consider if MaxBatchSize applies meaningfully to the removal panel.
-            // You might want to skip this limit check specifically for checkedListBoxRemove,
-            // or use a different limit. For now, it applies the same limit.
             if (e.NewValue == CheckState.Checked)
             {
-                // Example: Skip limit for removal list
-                // if (clb != checkedListBoxRemove && clb.CheckedItems.Count >= MaxBatchSize)
-                // Or apply the limit universally as below:
                 if (clb.CheckedItems.Count >= MaxBatchSize)
                 {
                     e.NewValue = CheckState.Unchecked;
@@ -824,11 +794,11 @@ namespace SafeGuard
                                        "Selection Limit Reached", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         _limitMessageShown = true;
                     }
-                    return; // Important: Return here if limit reached, don't schedule update
+                    return; 
                 }
                 else
                 {
-                    _limitMessageShown = false; // Reset flag if check passes
+                    _limitMessageShown = false;
                 }
             }
             else // When unchecking
@@ -1439,7 +1409,6 @@ namespace SafeGuard
             }
         }
 
-        // Keep this method if you still want single-image viewing from the grid double-click
         private void ShowImageInNewWindow(string imagePath, string title)
         {
             if (string.IsNullOrEmpty(imagePath)) return; // No path provided
@@ -1460,17 +1429,11 @@ namespace SafeGuard
                     return; // Not a displayable image type
                 }
 
-                // --- CHANGE HERE ---
                 // Create a list containing only the single path
                 List<string> singleImageList = new List<string> { imagePath };
 
-                // Close previous viewer if it exists (optional, maybe you want multiple single viewers?)
-                // If you want only one viewer EVER, manage the _batchImageViewer reference here too.
-                // For simplicity now, let's allow multiple single viewers from the grid.
                 if (_batchImageViewer != null && !_batchImageViewer.IsDisposed)
                 {
-                    // Decide: close the batch viewer if a single image is opened?
-                    // _batchImageViewer.Close();
                 }
 
                 // Call the constructor with the LIST
